@@ -11,6 +11,7 @@ use App\Http\Controllers\LaporanHarianController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PerusahaanController;
+use App\Http\Controllers\AdminController;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -50,30 +51,29 @@ Route::middleware(['auth'])->group(function () {
         // Route untuk laporan harian perusahaan
         Route::resource('laporan-harian', LaporanHarianController::class);
         Route::resource('penyimpanan', PenyimpananController::class);
+        
+        // Route untuk melihat jenis limbah (read-only)
+        Route::get('/jenis-limbah', [JenisLimbahController::class, 'index'])->name('jenis-limbah.index');
+        Route::get('/jenis-limbah/{jenisLimbah}', [JenisLimbahController::class, 'show'])->name('jenis-limbah.show');
     });
 });
 
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
-
-    // User Management
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    
+    // Users Management Routes
     Route::resource('users', UserController::class);
-    Route::get('users/{user}/password', [UserController::class, 'editPassword'])->name('users.password.edit');
-    Route::put('users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
-    Route::put('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
-
+    Route::get('/users/{user}/password', [UserController::class, 'editPassword'])->name('users.password.edit');
+    Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
+    Route::put('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    
     // Perusahaan Management
     Route::get('/perusahaan', [PerusahaanController::class, 'index'])->name('perusahaan.index');
     Route::get('/perusahaan/{perusahaan}', [PerusahaanController::class, 'show'])->name('perusahaan.show');
 
     // Resource Management
-    Route::resource('laporan-harian', LaporanHarianController::class);
     Route::resource('jenis-limbah', JenisLimbahController::class);
-    Route::resource('penyimpanan', PenyimpananController::class);
     Route::resource('vendor', VendorController::class);
 });
 

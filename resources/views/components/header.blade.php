@@ -164,10 +164,11 @@
             aria-label="Account"
             aria-haspopup="true"
           >
-          @if(Auth::user() && Auth::user()->perusahaan && Auth::user()->perusahaan->logo)
-           <img src="{{ Storage::url(Auth::user()->perusahaan->logo) }}" alt="Logo" class="object-cover w-8 h-8 rounded-full" alt="" aria-hidden="true">
-          @else
-          @endif
+            @if(Auth::user() && Auth::user()->perusahaan && Auth::user()->perusahaan->logo)
+              <img src="{{ Storage::url(Auth::user()->perusahaan->logo) }}" alt="Logo" class="object-cover w-8 h-8 rounded-full" alt="" aria-hidden="true">
+            @else
+              <img class="object-cover w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" alt="" aria-hidden="true">
+            @endif
           </button>
           <template x-if="isProfileMenuOpen">
             <ul
@@ -179,6 +180,7 @@
               class="absolute right-0 w-56 p-2 mt-2 space-y-2 text-gray-600 bg-white border border-gray-100 rounded-md shadow-md dark:border-gray-700 dark:text-gray-300 dark:bg-gray-700"
               aria-label="submenu"
             >
+              @if(Auth::user() && Auth::user()->perusahaan)
               <li class="flex">
                 <a
                   class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
@@ -201,6 +203,7 @@
                   <span>Profile</span>
                 </a>
               </li>
+              @endif
               <li class="flex">
                 <a
                   class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
@@ -225,9 +228,9 @@
                 </a>
               </li>
               <li class="flex">
-                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                <form method="POST" action="{{ route('logout') }}" class="w-full" id="logout-form">
                     @csrf
-                    <button type="submit"
+                    <button type="button" onclick="confirmLogout()"
                         class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200">
                         <svg
                             class="w-4 h-4 mr-3"
@@ -253,3 +256,11 @@
       </ul>
     </div>
   </header>
+
+  <script>
+    function confirmLogout() {
+      if (confirm('Apakah Anda yakin ingin keluar?')) {
+        document.getElementById('logout-form').submit();
+      }
+    }
+  </script>

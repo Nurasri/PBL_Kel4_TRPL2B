@@ -9,6 +9,6 @@ class JenisLimbah extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nama', 'deskripsi'];
+    protected $fillable = ['nama', 'kategori', 'deskripsi'];
 }
 

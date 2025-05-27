@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('jenis_limbahs', function (Blueprint $table) {
             $table->id();
             $table->string('nama')->unique();
+            $table->string('kategori');
             $table->text('deskripsi')->nullable();
             $table->timestamps();
         });

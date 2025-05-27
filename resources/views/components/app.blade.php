@@ -28,18 +28,19 @@
   <body class="bg-gray-50 dark:bg-gray-900">
     <div class="flex h-screen overflow-hidden">
       <!-- Sidebar -->
-      <x-sidebar />
+        <x-sidebar></x-sidebar>
       
       <!-- Main Content -->
       <div class="flex flex-col flex-1 overflow-hidden">
-        <x-header />
+            <x-header></x-header>
         <main class="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-800">
           <div class="container px-6 mx-auto py-6">
             {{ $slot }}
           </div>
+          <x-footer></x-footer>
         </main>
-        <x-footer />
-      </div>
+            
+        </div>
     </div>
   </body>
 </html>
