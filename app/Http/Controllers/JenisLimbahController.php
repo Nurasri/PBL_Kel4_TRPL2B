@@ -2,69 +2,88 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\JenisLimbah;
+use Illuminate\Http\Request;
 
 class JenisLimbahController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
-        $jenisLimbahs = JenisLimbah::latest()->paginate(10);
-        return view('jenis-limbah.index', compact('jenisLimbahs'));
+        $jenisLimbah = JenisLimbah::paginate(10);
+        return view('jenis-limbah.index', compact('jenisLimbah'));
     }
 
+    /**
+     * Show the form for creating a new resource.
+     */
     public function create()
     {
         return view('jenis-limbah.create');
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'nama' => 'required|unique:jenis_limbahs,nama',
-            'deskripsi' => 'nullable|string',
+            'nama' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
+            'deskripsi' => 'required|string',
+            'status' => 'required|in:active,inactive',
         ]);
 
         JenisLimbah::create($request->all());
 
         return redirect()->route('admin.jenis-limbah.index')
-                         ->with('success', 'Jenis limbah berhasil ditambahkan.');
+            ->with('success', 'Jenis limbah berhasil ditambahkan.');
     }
 
-    public function show($id)
+    /**
+     * Display the specified resource.
+     */
+    public function show(JenisLimbah $jenisLimbah)
     {
-        $jenisLimbah = JenisLimbah::findOrFail($id);
         return view('jenis-limbah.show', compact('jenisLimbah'));
     }
 
-    public function edit($id)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(JenisLimbah $jenisLimbah)
     {
-        $jenisLimbah = JenisLimbah::findOrFail($id);
         return view('jenis-limbah.edit', compact('jenisLimbah'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, JenisLimbah $jenisLimbah)
     {
-        $jenisLimbah = JenisLimbah::findOrFail($id);
-
         $request->validate([
-            'nama' => 'required|unique:jenis_limbahs,nama,' . $jenisLimbah->id,
-            'deskripsi' => 'nullable|string',
+            'nama' => 'required|string|max:255',
+            'deskripsi' => 'required|string',
+            'status' => 'required|in:active,inactive',
         ]);
 
         $jenisLimbah->update($request->all());
 
         return redirect()->route('admin.jenis-limbah.index')
-                         ->with('success', 'Jenis limbah berhasil diperbarui.');
+            ->with('success', 'Jenis limbah berhasil diperbarui.');
     }
 
-    public function destroy($id)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(JenisLimbah $jenisLimbah)
     {
-        $jenisLimbah = JenisLimbah::findOrFail($id);
         $jenisLimbah->delete();
 
         return redirect()->route('admin.jenis-limbah.index')
-                         ->with('success', 'Jenis limbah berhasil dihapus.');
+            ->with('success', 'Jenis limbah berhasil dihapus.');
     }
 }
 

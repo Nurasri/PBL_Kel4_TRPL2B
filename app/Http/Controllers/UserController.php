@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
@@ -16,7 +15,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::latest()->paginate(10);
-        return view('users.index', compact('users'));
+        return view('admin.users.index', compact('users'));
     }
 
     /**
@@ -24,7 +23,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('users.create');
+        return view('admin.users.create');
     }
 
     /**
@@ -32,25 +31,24 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => ['required', 'string', Rule::in(['admin', 'perusahaan'])],
-            'status' => ['required', 'string', Rule::in(['active', 'inactive'])],
-            'notes' => ['nullable', 'string'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => ['required', 'in:admin,perusahaan'],
+            'status' => ['required', 'in:active,inactive'],
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'status' => $validated['status'],
-            'notes' => $validated['notes'],
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'status' => $request->status,
+            'notes' => $request->notes,
         ]);
 
-        return redirect()->route('users.index')
+        return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil dibuat.');
     }
 
@@ -59,7 +57,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return view('users.show', compact('user'));
+        return view('admin.users.show', compact('user'));
     }
 
     /**
@@ -67,7 +65,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        return view('admin.users.edit', compact('user'));
     }
 
     /**
@@ -75,17 +73,22 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', 'string', Rule::in(['admin', 'perusahaan'])],
-            'status' => ['required', 'string', Rule::in(['active', 'inactive'])],
-            'notes' => ['nullable', 'string'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'role' => ['required', 'in:admin,perusahaan'],
+            'status' => ['required', 'in:active,inactive'],
         ]);
 
-        $user->update($validated);
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'status' => $request->status,
+            'notes' => $request->notes,
+        ]);
 
-        return redirect()->route('users.index')
+        return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil diperbarui.');
     }
 
@@ -94,15 +97,9 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        // Prevent self-deletion
-        if ($user->id === auth()->id()) {
-            return redirect()->route('users.index')
-                ->with('error', 'Tidak dapat menghapus akun sendiri.');
-        }
-
         $user->delete();
 
-        return redirect()->route('users.index')
+        return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil dihapus.');
     }
 
@@ -111,7 +108,7 @@ class UserController extends Controller
      */
     public function editPassword(User $user)
     {
-        return view('users.edit-password', compact('user'));
+        return view('admin.users.edit-password', compact('user'));
     }
 
     /**
@@ -120,14 +117,14 @@ class UserController extends Controller
     public function updatePassword(Request $request, User $user)
     {
         $validated = $request->validate([
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user->update([
             'password' => Hash::make($validated['password']),
         ]);
 
-        return redirect()->route('users.show', $user)
+        return redirect()->route('admin.users.show', $user)
             ->with('success', 'Password berhasil diperbarui.');
     }
 
@@ -138,7 +135,7 @@ class UserController extends Controller
     {
         // Prevent self-deactivation
         if ($user->id === auth()->id()) {
-            return redirect()->route('users.index')
+            return redirect()->route('admin.users.index')
                 ->with('error', 'Tidak dapat menonaktifkan akun sendiri.');
         }
 
@@ -146,7 +143,7 @@ class UserController extends Controller
         $user->save();
 
         $status = $user->status === 'active' ? 'diaktifkan' : 'dinonaktifkan';
-        return redirect()->route('users.index')
+        return redirect()->route('admin.users.index')
             ->with('success', "User berhasil {$status}.");
     }
 } 

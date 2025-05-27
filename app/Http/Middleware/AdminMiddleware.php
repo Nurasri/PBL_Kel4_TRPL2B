@@ -4,36 +4,19 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
 {
     /**
      * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
-            return redirect()->route('login')
-                ->with('error', 'Silakan login terlebih dahulu.');
-        }
-
-        $user = Auth::user();
-
-        if (!$user->isAdmin()) {
-            if ($user->isPerusahaan()) {
-                if (!$user->perusahaan) {
-                    return redirect()->route('perusahaan.create')
-                        ->with('warning', 'Silakan lengkapi profil perusahaan Anda terlebih dahulu.');
-                }
-                return redirect()->route('perusahaan.dashboard')
-                    ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
-            }
-            
-            Auth::logout();
-            return redirect()->route('login')
-                ->with('error', 'Akun Anda tidak memiliki akses yang valid.');
+        if (!$request->user() || $request->user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
         }
 
         return $next($request);
