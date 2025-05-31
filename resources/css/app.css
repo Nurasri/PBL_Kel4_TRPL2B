@@ -1,5 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-@import "tailwindcss";
-@source "../views";
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Hanya tambahkan custom styles yang benar-benar diperlukan */
+@layer components {
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+        @apply border-green-400 ring-2 ring-green-400 ring-opacity-50;
+    }
+}
+
+.focus\:shadow-outline-green:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.dark .focus\:shadow-outline-green:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Button styles */
+.btn-green {
+    @apply px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-green;
+}
+
+.btn-gray {
+    @apply px-4 py-2 text-sm font-medium leading-5 text-gray-700 transition-colors duration-150 bg-gray-300 border border-transparent rounded-lg active:bg-gray-300 hover:bg-gray-400 focus:outline-none focus:shadow-outline-gray;
+}

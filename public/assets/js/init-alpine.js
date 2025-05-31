@@ -1,62 +1,70 @@
 function data() {
-  function getThemeFromLocalStorage() {
-    // if user already changed the theme, use it
-    if (window.localStorage.getItem('dark')) {
-      return JSON.parse(window.localStorage.getItem('dark'))
-    }
-
-    // else return their preferences
-    return (
-      !!window.matchMedia &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches
-    )
-  }
-
-  function setThemeToLocalStorage(value) {
-    window.localStorage.setItem('dark', value)
-  }
-
   return {
-    dark: getThemeFromLocalStorage(),
-    toggleTheme() {
-      this.dark = !this.dark
-      setThemeToLocalStorage(this.dark)
-    },
+    // Sidebar states
     isSideMenuOpen: false,
+    isSidebarCollapsed: false,
+    
+    // Profile menu state
+    isProfileMenuOpen: false,
+    
+    // Notification menu state
+    isNotificationMenuOpen: false,
+    
+    // Dark mode state
+    dark: false,
+    
+    // Sidebar functions
     toggleSideMenu() {
       this.isSideMenuOpen = !this.isSideMenuOpen
     },
+    
     closeSideMenu() {
       this.isSideMenuOpen = false
     },
-    isNotificationsMenuOpen: false,
-    toggleNotificationsMenu() {
-      this.isNotificationsMenuOpen = !this.isNotificationsMenuOpen
+    
+    toggleSidebar() {
+      this.isSidebarCollapsed = !this.isSidebarCollapsed
     },
-    closeNotificationsMenu() {
-      this.isNotificationsMenuOpen = false
-    },
-    isProfileMenuOpen: false,
+    
+    // Profile menu functions
     toggleProfileMenu() {
       this.isProfileMenuOpen = !this.isProfileMenuOpen
+      this.isNotificationMenuOpen = false; // Close notification when opening profile
     },
+    
     closeProfileMenu() {
       this.isProfileMenuOpen = false
     },
-    isPagesMenuOpen: false,
-    togglePagesMenu() {
-      this.isPagesMenuOpen = !this.isPagesMenuOpen
+    
+    // Notification menu functions
+    toggleNotificationMenu() {
+      this.isNotificationMenuOpen = !this.isNotificationMenuOpen
+      this.isProfileMenuOpen = false; // Close profile when opening notification
     },
-    // Modal
-    isModalOpen: false,
-    trapCleanup: null,
-    openModal() {
-      this.isModalOpen = true
-      this.trapCleanup = focusTrap(document.querySelector('#modal'))
+    
+    closeNotificationMenu() {
+      this.isNotificationMenuOpen = false
     },
-    closeModal() {
-      this.isModalOpen = false
-      this.trapCleanup()
+    
+    // Dark mode toggle
+    toggleTheme() {
+      this.dark = !this.dark
+      localStorage.setItem('theme', this.dark ? 'dark' : 'light')
     },
+    
+    // Initialize theme from localStorage
+    initTheme() {
+      const savedTheme = localStorage.getItem('theme')
+      if (savedTheme) {
+        this.dark = savedTheme === 'dark'
+      } else {
+        this.dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      }
+    }
   }
 }
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Any additional initialization can go here
+})

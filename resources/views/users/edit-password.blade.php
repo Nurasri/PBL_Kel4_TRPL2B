@@ -1,39 +1,54 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Ubah Password User') }}
+<x-app>
+    <x-slot:title>Ubah Password User</x-slot:title>
+    
+    <div class="container px-6 mx-auto grid">
+        <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
+            Ubah Password User
         </h2>
-    </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <form action="{{ route('users.password.update', $user) }}" method="POST" class="space-y-6">
-                        @csrf
-                        @method('PUT')
-
-                        <div>
-                            <x-input-label for="password" :value="__('Password Baru')" />
-                            <x-text-input id="password" name="password" type="password" class="mt-1 block w-full" required />
-                            <x-input-error class="mt-2" :messages="$errors->get('password')" />
-                        </div>
-
-                        <div>
-                            <x-input-label for="password_confirmation" :value="__('Konfirmasi Password Baru')" />
-                            <x-text-input id="password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" required />
-                            <x-input-error class="mt-2" :messages="$errors->get('password_confirmation')" />
-                        </div>
-
-                        <div class="flex items-center gap-4">
-                            <x-primary-button>{{ __('Simpan') }}</x-primary-button>
-                            <a href="{{ route('users.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-400 focus:bg-gray-400 active:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                {{ __('Batal') }}
-                            </a>
-                        </div>
-                    </form>
-                </div>
+        <div class="px-4 py-3 bg-white rounded-lg shadow-md dark:bg-gray-800">
+            <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300">
+                    User: {{ $user->name }}
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">{{ $user->email }}</p>
             </div>
+
+            <form action="{{ route('users.password.update', $user) }}" method="POST" class="space-y-6">
+                @csrf
+                @method('PUT')
+
+                <label class="block text-sm">
+                    <span class="text-gray-700 dark:text-gray-400">Password Baru</span>
+                    <input type="password" name="password" 
+                           class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" 
+                           required />
+                    @error('password')
+                        <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
+                    @enderror
+                </label>
+
+                <label class="block text-sm">
+                    <span class="text-gray-700 dark:text-gray-400">Konfirmasi Password Baru</span>
+                    <input type="password" name="password_confirmation" 
+                           class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" 
+                           required />
+                    @error('password_confirmation')
+                        <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
+                    @enderror
+                </label>
+
+                <div class="flex items-center gap-4">
+                    <button type="submit" 
+                            class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
+                        Simpan
+                    </button>
+                    <a href="{{ route('users.index') }}" 
+                       class="px-4 py-2 text-sm font-medium leading-5 text-gray-700 transition-colors duration-150 bg-gray-300 border border-transparent rounded-lg active:bg-gray-300 hover:bg-gray-400 focus:outline-none focus:shadow-outline-gray">
+                        Batal
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
-</x-app-layout> 
+</x-app>
