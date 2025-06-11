@@ -11,20 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jenis_limbahs', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama')->unique();
-            $table->text('deskripsi')->nullable();
-            $table->timestamps();
+        Schema::table('laporan_harians', function (Blueprint $table) {
+            if (!Schema::hasColumn('laporan_harians', 'deleted_at')) {
+                $table->softDeletes();
+            }
         });
     }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('jenis_limbahs');
+        Schema::table('laporan_harians', function (Blueprint $table) {
+            $table->dropColumn(['deleted_at']);
+        });
     }
 };

@@ -35,7 +35,7 @@
 
       <ul class="flex items-center flex-shrink-0 space-x-6">
           <!-- Theme toggler -->
-          {{-- <li class="flex">
+          <li class="flex">
               <button class="rounded-md focus:outline-none focus:shadow-outline-green"
                       @click="toggleTheme" 
                       aria-label="Toggle color mode">
@@ -50,7 +50,7 @@
                       </svg>
                   </template>
               </button>
-          </li> --}}
+          </li>
 
           <!-- Notifications menu -->
           <li class="relative">
@@ -106,88 +106,82 @@
           </li>
 
           <!-- Profile menu -->
-          <li class="relative">
-              <div x-data="{ isProfileMenuOpen: false }">
-                  <button class="align-middle rounded-full focus:shadow-outline-green focus:outline-none"
-                          @click="isProfileMenuOpen = !isProfileMenuOpen" 
-                          @keydown.escape="isProfileMenuOpen = false" 
-                          aria-label="Account" 
-                          aria-haspopup="true">
-                      @if(Auth::user() && Auth::user()->perusahaan && Auth::user()->perusahaan->logo)
-                          <img src="{{ Storage::url(Auth::user()->perusahaan->logo) }}" alt="Logo"
-                               class="object-cover w-8 h-8 rounded-full" aria-hidden="true">
-                      @else
-                          <img class="object-cover w-8 h-8 rounded-full"
-                               src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" 
-                               alt="" aria-hidden="true">
-                      @endif
-                  </button>
+          <li class="relative" x-data="{ isProfileMenuOpen: false }">
+              <button class="align-middle rounded-full focus:shadow-outline-green focus:outline-none"
+                      @click="isProfileMenuOpen = !isProfileMenuOpen" 
+                      @keydown.escape="isProfileMenuOpen = false" 
+                      aria-label="Account" 
+                      aria-haspopup="true">
+                  @if(Auth::user() && Auth::user()->perusahaan && Auth::user()->perusahaan->logo)
+                      <img src="{{ Storage::url(Auth::user()->perusahaan->logo) }}" alt="Logo"
+                           class="object-cover w-8 h-8 rounded-full" aria-hidden="true">
+                  @else
+                      <img class="object-cover w-8 h-8 rounded-full"
+                           src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" 
+                           alt="" aria-hidden="true">
+                  @endif
+              </button>
+              
+              <!-- Profile Dropdown -->
+              <div x-show="isProfileMenuOpen"
+                   x-transition:enter="transition ease-out duration-100"
+                   x-transition:enter-start="transform opacity-0 scale-95"
+                   x-transition:enter-end="transform opacity-100 scale-100"
+                   x-transition:leave="transition ease-in duration-75"
+                   x-transition:leave-start="transform opacity-100 scale-100"
+                   x-transition:leave-end="transform opacity-0 scale-95"
+                   @click.away="isProfileMenuOpen = false" 
+                   @keydown.escape="isProfileMenuOpen = false"
+                   class="absolute right-0 z-50 w-56 p-2 mt-2 space-y-2 text-gray-600 bg-white border border-gray-100 rounded-md shadow-md dark:border-gray-700 dark:text-gray-300 dark:bg-gray-700"
+                   style="display: none;"
+                   aria-label="submenu">
                   
-                  <!-- Profile Dropdown -->
-                  <div x-show="isProfileMenuOpen"
-                       x-transition:enter="transition ease-out duration-100"
-                       x-transition:enter-start="transform opacity-0 scale-95"
-                       x-transition:enter-end="transform opacity-100 scale-100"
-                       x-transition:leave="transition ease-in duration-75"
-                       x-transition:leave-start="transform opacity-100 scale-100"
-                       x-transition:leave-end="transform opacity-0 scale-95"
-                       @click.away="isProfileMenuOpen = false" 
-                       @keydown.escape="isProfileMenuOpen = false"
-                       class="absolute right-0 z-50 w-56 p-2 mt-2 space-y-2 text-gray-600 bg-white border border-gray-100 rounded-md shadow-md dark:border-gray-700 dark:text-gray-300 dark:bg-gray-700"
-                       style="display: none;"
-                       x-cloak>
-                      
-                      <!-- User Info Header -->
-                      <div class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
-                          {{ Auth::user()->name }}
-                          <div class="text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()->email }}</div>
-                      </div>
+                  <!-- User Info Header -->
+                  <div class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+                      {{ Auth::user()->name }}
+                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()->email }}</div>
+                  </div>
 
-                      @if(Auth::user() && Auth::user()->perusahaan)
-                          <div class="flex">
-                              <a class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                                 href="{{ route('perusahaan.show', Auth::user()->perusahaan->id) }}">
-                                  <svg class="w-4 h-4 mr-3" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
-                                       stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                  </svg>
-                                  <span>Profile Perusahaan</span>
-                              </a>
-                          </div>
-                      @endif
-                      
+                  @if(Auth::user() && Auth::user()->perusahaan)
                       <div class="flex">
                           <a class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                             href="{{ route('profile.edit') }}">
-                              <svg class="w-4 h-4 mr-3" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"                       <div class="flex">
-                          <a class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                             href="{{ route('profile.edit') }}">
+                             href="{{ route('perusahaan.show', Auth::user()->perusahaan->id) }}">
                               <svg class="w-4 h-4 mr-3" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
                                    stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                  <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                               </svg>
-                              <span>Pengaturan</span>
+                              <span>Profile Perusahaan</span>
                           </a>
                       </div>
+                  @endif
+                  
+                  <div class="flex">
+                      <a class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                         href="{{ route('profile.edit') }}">
+                          <svg class="w-4 h-4 mr-3" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
+                               stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+                              <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                              <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          </svg>
+                          <span>Settings</span>
+                      </a>
+                  </div>
 
-                      <!-- Logout -->
-                      <div class="flex">
-                          <form method="POST" action="{{ route('logout') }}" class="w-full">
-                              @csrf
-                              <button type="submit" class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200">
-                                  <svg class="w-4 h-4 mr-3" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
-                                       stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                                  </svg>
-                                  <span>Logout</span>
-                              </button>
-                          </form>
-                      </div>
+                  <!-- Logout -->
+                  <div class="flex">
+                      <form method="POST" action="{{ route('logout') }}" class="w-full">
+                          @csrf
+                          <button type="submit" class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+                              <svg class="w-4 h-4 mr-3" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
+                                   stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                              </svg>
+                              <span>Log out</span>
+                          </button>
+                      </form>
                   </div>
               </div>
           </li>
       </ul>
   </div>
 </header>
-

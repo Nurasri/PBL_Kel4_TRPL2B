@@ -11,10 +11,10 @@
 >
   <div class="py-4 text-gray-500 dark:text-gray-400">
     <div class="flex items-center justify-between px-4">
-      <a class="text-lg font-bold text-green-600 dark:text-green-400" 
-         href="@if(auth()->user()->isAdmin()) {{ route('admin.dashboard') }} @elseif(auth()->user()->isPerusahaan()) {{ route('perusahaan.dashboard') }} @else {{ route('profile.edit') }} @endif">
+      <a class="text-lg font-bold text-green-600 dark:text-green-400" href="#">
         EcoCycle
       </a>
+     
       <button @click="closeSideMenu" class="ml-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />

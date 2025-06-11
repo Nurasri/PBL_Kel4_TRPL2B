@@ -2,39 +2,183 @@
     <x-slot:title>
         Tambah Penyimpanan Limbah
     </x-slot:title>
+    
+    <!-- DEBUG: Tambahkan info debug -->
+    @if(config('app.debug'))
+        <div class="mb-4 p-4 bg-yellow-100 rounded border">
+            <h4 class="font-bold">Debug Info:</h4>
+            <p><strong>User ID:</strong> {{ Auth::user()->id }}</p>
+            <p><strong>User Name:</strong> {{ Auth::user()->name }}</p>
+            <p><strong>User Role:</strong> {{ Auth::user()->role }}</p>
+            <p><strong>Has Perusahaan:</strong> {{ Auth::user()->perusahaan ? 'Yes' : 'No' }}</p>
+            @if(Auth::user()->perusahaan)
+                <p><strong>Perusahaan ID:</strong> {{ Auth::user()->perusahaan->id }}</p>
+                <p><strong>Perusahaan Name:</strong> {{ Auth::user()->perusahaan->nama_perusahaan }}</p>
+            @endif
+            
+            <!-- TAMBAH: Debug jenis limbah -->
+            <hr class="my-2">
+            <p><strong>Jenis Limbah Variable Exists:</strong> {{ isset($jenisLimbahs) ? 'Yes' : 'No' }}</p>
+            @if(isset($jenisLimbahs))
+                <p><strong>Jenis Limbah Count:</strong> {{ $jenisLimbahs->count() }}</p>
+                @if($jenisLimbahs->count() > 0)
+                    <p><strong>First Jenis Limbah:</strong> {{ $jenisLimbahs->first()->nama ?? 'No name' }}</p>
+                @endif
+            @endif
+        </div>
+    @endif
+    
     <div class="container px-6 mx-auto grid">
-        <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">Tambah Penyimpanan Limbah</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
+                Tambah Penyimpanan Limbah
+            </h2>
+            <x-button variant="secondary" href="{{ route('penyimpanan.index') }}">
+                Kembali
+            </x-button>
+        </div>
+
         @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
+            <x-alert type="error">
+                <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
-            </div>
+            </x-alert>
         @endif
-        <form action="{{ route('penyimpanan.store') }}" method="POST">
-            @csrf
-            <div class="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
-                <label class="block text-sm" for="lokasi">
-                    <span class="text-gray-700 dark:text-gray-400">Lokasi Penyimpanan</span>
-                    <input type="text" name="lokasi" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" required value="{{ old('lokasi') }}" />
-                </label>
-                <label class="block text-sm mt-4" for="jenis_penyimpanan">
-                    <span class="text-gray-700 dark:text-gray-400">Jenis Penyimpanan</span>
-                    <input type="text" name="jenis_penyimpanan" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" required value="{{ old('jenis_penyimpanan') }}" />
-                </label>
-                <label class="block text-sm mt-4" for="kapasitas">
-                    <span class="text-gray-700 dark:text-gray-400">Kapasitas</span>
-                    <input type="text" name="kapasitas" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" value="{{ old('kapasitas') }}" />
-                </label>
-                <label class="block text-sm mt-4" for="catatan">
-                    <span class="text-gray-700 dark:text-gray-400">Catatan (Opsional)</span>
-                    <textarea name="catatan" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input">{{ old('catatan') }}</textarea>
-                </label>
-                <button type="submit" class="px-4 py-2 mt-4 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">Simpan</button>
-                <a href="{{ route('penyimpanan.index') }}" class="px-4 py-2 mt-4 ml-2 text-sm font-medium leading-5 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:shadow-outline-gray">Kembali</a>
-            </div>
-        </form>
+
+        <x-card>
+            <form action="{{ route('penyimpanan.store') }}" method="POST">
+                @csrf
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Kolom Kiri -->
+                    <div class="space-y-4">
+                        <!-- TAMBAH: Jenis Limbah -->
+                        <x-form-group label="Jenis Limbah" name="jenis_limbah_id" required>
+                            <x-select name="jenis_limbah_id" placeholder="Pilih Jenis Limbah" required>
+                                @if(isset($jenisLimbahs) && $jenisLimbahs->count() > 0)
+                                    @foreach($jenisLimbahs as $jenis)
+                                        <option value="{{ $jenis->id }}" 
+                                                data-satuan="{{ $jenis->satuan_default }}"
+                                                {{ old('jenis_limbah_id') == $jenis->id ? 'selected' : '' }}>
+                                            {{ $jenis->nama }} ({{ $jenis->kode_limbah }})
+                                        </option>
+                                    @endforeach
+                                @else
+                                    <option value="" disabled>Tidak ada jenis limbah tersedia</option>
+                                @endif
+                            </x-select>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Pilih jenis limbah yang akan disimpan di tempat ini
+                                @if(isset($jenisLimbahs))
+                                    ({{ $jenisLimbahs->count() }} jenis tersedia)
+                                @endif
+                            </p>
+                        </x-form-group>
+
+                        <x-form-group label="Nama Penyimpanan" name="nama_penyimpanan" required>
+                            <x-input name="nama_penyimpanan" value="{{ old('nama_penyimpanan') }}" placeholder="Contoh: Tangki Limbah B3 - 001" required />
+                        </x-form-group>
+
+                        <x-form-group label="Lokasi Penyimpanan" name="lokasi" required>
+                            <x-input name="lokasi" value="{{ old('lokasi') }}" placeholder="Contoh: Gudang A, Lantai 2" required />
+                        </x-form-group>
+
+                        <x-form-group label="Jenis Penyimpanan" name="jenis_penyimpanan" required>
+                            <x-select name="jenis_penyimpanan" :options="\App\Models\Penyimpanan::getJenisPenyimpananOptions()" value="{{ old('jenis_penyimpanan') }}" required />
+                        </x-form-group>
+
+                        <!-- UPDATE: Kapasitas dengan satuan dinamis -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <x-form-group label="Kapasitas Maksimal" name="kapasitas_maksimal" required>
+                                <x-input type="number" name="kapasitas_maksimal" value="{{ old('kapasitas_maksimal') }}" step="0.01" min="0" placeholder="0.00" required />
+                            </x-form-group>
+
+                            <x-form-group label="Satuan" name="satuan_display">
+                                <x-input name="satuan_display" id="satuan_display" readonly placeholder="Pilih jenis limbah dulu" class="bg-gray-50" />
+                                <p class="mt-1 text-xs text-gray-500">Satuan mengikuti jenis limbah yang dipilih</p>
+                            </x-form-group>
+                        </div>
+
+                        <!-- HAPUS: Kapasitas terpakai di create form -->
+                    </div>
+
+                    <!-- Kolom Kanan -->
+                    <div class="space-y-4">
+                        <x-form-group label="Kondisi Penyimpanan" name="kondisi" required>
+                            <x-select name="kondisi" :options="\App\Models\Penyimpanan::getKondisiOptions()" value="{{ old('kondisi', 'baik') }}" required />
+                        </x-form-group>
+
+                        <x-form-group label="Status" name="status" required>
+                            <x-select name="status" :options="\App\Models\Penyimpanan::getStatusOptions()" value="{{ old('status', 'aktif') }}" required />
+                        </x-form-group>
+
+                        <x-form-group label="Tanggal Pembuatan/Instalasi" name="tanggal_pembuatan" required>
+                            <x-input type="date" name="tanggal_pembuatan" value="{{ old('tanggal_pembuatan') }}" max="{{ date('Y-m-d') }}" required />
+                        </x-form-group>
+
+                        <x-form-group label="Catatan" name="catatan">
+                            <x-textarea name="catatan" rows="4" placeholder="Catatan tambahan tentang penyimpanan ini...">{{ old('catatan') }}</x-textarea>
+                        </x-form-group>
+
+                        <!-- TAMBAH: Info jenis limbah yang dipilih -->
+                        <div id="jenis-limbah-info" class="hidden p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                            <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-2">Informasi Jenis Limbah</h4>
+                            <div id="limbah-details" class="text-sm text-blue-700 dark:text-blue-300">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end mt-8 space-x-3">
+                    <x-button variant="secondary" href="{{ route('penyimpanan.index') }}">
+                        Batal
+                    </x-button>
+                    <x-button type="submit">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Simpan Penyimpanan
+                    </x-button>
+                </div>
+            </form>
+        </x-card>
     </div>
+
+    <!-- TAMBAH: JavaScript untuk update satuan -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const jenisLimbahSelect = document.querySelector('select[name="jenis_limbah_id"]');
+            const satuanDisplay = document.querySelector('input[name="satuan_display"]');
+            const jenisLimbahInfo = document.getElementById('jenis-limbah-info');
+            const limbahDetails = document.getElementById('limbah-details');
+
+            if (jenisLimbahSelect && satuanDisplay) {
+                jenisLimbahSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    
+                    if (selectedOption.value) {
+                        const satuan = selectedOption.dataset.satuan;
+                        satuanDisplay.value = satuan;
+                        
+                        limbahDetails.innerHTML = `
+                            <p><strong>Satuan:</strong> ${satuan}</p>
+                            <p><strong>Kode:</strong> ${selectedOption.text.match(/\((.*?)\)/)?.[1] || '-'}</p>
+                        `;
+                        jenisLimbahInfo.classList.remove('hidden');
+                    } else {
+                        satuanDisplay.value = '';
+                        jenisLimbahInfo.classList.add('hidden');
+                    }
+                });
+
+                if (jenisLimbahSelect.value) {
+                    jenisLimbahSelect.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+    </script>
 </x-app>

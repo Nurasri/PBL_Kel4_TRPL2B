@@ -1,87 +1,135 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-// Import LaporanController, KategoriController, VendorController if they exist or create them.
-// For now, we'll use a generic controller or closure for placeholders.
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PerusahaanController;
 use App\Http\Controllers\JenisLimbahController;
-use App\Http\Controllers\PenyimpananController;
 use App\Http\Controllers\LaporanHarianController;
-use App\Models\Penyimpanan;
+use App\Http\Controllers\PenyimpananController;
+use App\Http\Controllers\VendorController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdminController;
+use Illuminate\Support\Facades\Route;
 
-// Guest routes
-Route::middleware('guest')->group(function () {
-    Route::get('/', function () {
-        return view('welcome');
-    });
+Route::get('/', function () {
+    return view('welcome');
 });
 
-// User profile routes (untuk semua user yang sudah login)
+// Authentication routes
+require __DIR__ . '/auth.php';
+
+// Routes yang memerlukan authentication
 Route::middleware('auth')->group(function () {
+    // Profile routes (untuk semua user yang sudah login)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Dashboard routes berdasarkan role
+    Route::get('/dashboard', function () {
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        } elseif (auth()->user()->isPerusahaan()) {
+            return redirect()->route('perusahaan.dashboard');
+        }
+        return redirect()->route('profile.edit');
+    })->name('dashboard');
+
+    // Admin routes
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+        // User management
+        Route::resource('users', UserController::class);
+        Route::put('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('/users/{user}/password/edit', [UserController::class, 'editPassword'])->name('users.password.edit');
+        Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
+       
+        // Perusahaan management
+        Route::get('/perusahaan', [PerusahaanController::class, 'adminIndex'])->name('perusahaan.index');
+        Route::get('/perusahaan/{perusahaan}', [PerusahaanController::class, 'adminShow'])->name('perusahaan.show');
+
+        // Vendor management
+        Route::resource('vendor', VendorController::class);
+        Route::get('/vendor/create', [VendorController::class, 'create'])->name('vendor.create');
+        Route::post('/vendor', [VendorController::class, 'store'])->name('vendor.store');
+        Route::get('/vendor/{vendor}/edit', [VendorController::class, 'edit'])->name('vendor.edit');
+        Route::put('/vendor/{vendor}', [VendorController::class, 'update'])->name('vendor.update');
+        Route::delete('/vendor/{vendor}', [VendorController::class, 'destroy'])->name('vendor.destroy');
+        Route::put('/vendor/{vendor}/toggle-status', [VendorController::class, 'toggleStatus'])->name('vendor.toggle-status');
+    });
+
+    // Perusahaan routes
+    Route::middleware('perusahaan')->group(function () {
+        Route::get('/perusahaan/dashboard', [PerusahaanController::class, 'dashboard'])->name('perusahaan.dashboard');
+
+        // profil perusahaan
+        Route::get('/perusahaan/{perusahaan}', [PerusahaanController::class, 'show'])->name('perusahaan.show');
+        Route::get('/perusahaan/{perusahaan}/edit', [PerusahaanController::class, 'edit'])->name('perusahaan.edit');
+        Route::put('/perusahaan/{perusahaan}', [PerusahaanController::class, 'update'])->name('perusahaan.update');
+
+        // Laporan Harian
+        Route::resource('laporan-harian', LaporanHarianController::class);
+        Route::post('/laporan-harian/{laporanHarian}/submit', [LaporanHarianController::class, 'submit'])
+            ->name('laporan-harian.submit');
+        Route::get('/laporan-harian/export/csv', [LaporanHarianController::class, 'export'])
+            ->name('laporan-harian.export');
+        Route::post('/laporan-harian/bulk-action', [LaporanHarianController::class, 'bulkAction'])
+            ->name('laporan-harian.bulk-action');
+
+        // API penyimpanan
+       
+        Route::get('/api/jenis-limbah-info', [LaporanHarianController::class, 'getJenisLimbahInfo'])
+            ->name('api.jenis-limbah-info');
+        Route::get('/api/laporan-statistics', [LaporanHarianController::class, 'getStatistics'])
+            ->name('api.laporan-statistics');
+
+        // Penyimpanan
+        Route::resource('penyimpanan', PenyimpananController::class);
+        Route::put('/penyimpanan/{penyimpanan}/update-kapasitas', [PenyimpananController::class, 'updateKapasitas'])
+            ->name('penyimpanan.update-kapasitas');
+    });
+
+    // API routes untuk AJAX
+    Route::middleware(['auth', 'perusahaan'])->group(function () {
+         Route::get('/api/penyimpanan-by-jenis-limbah', [LaporanHarianController::class, 'getPenyimpananByJenisLimbah'])
+             ->name('api.penyimpanan-by-jenis-limbah');
+    });
+
+
+    // Perusahaan profile routes (untuk membuat dan mengelola profil perusahaan)
+    Route::get('/perusahaan/create', [PerusahaanController::class, 'create'])->name('perusahaan.create');
+    Route::post('/perusahaan', [PerusahaanController::class, 'store'])->name('perusahaan.store');
+
+    // Jenis Limbah routes (accessible by both admin and perusahaan with different permissions)
+    Route::resource('jenis-limbah', JenisLimbahController::class);
+
+    // Vendor bisa dilihat oleh semua user (untuk memilih saat pengelolaan limbah)
+    Route::get('/vendor', [VendorController::class, 'index'])->name('vendor.index');
+    Route::get('/vendor/{vendor}', [VendorController::class, 'show'])->name('vendor.show');
+
+    // API endpoint untuk AJAX
+    Route::get('api/vendors/by-jenis-layanan', [VendorController::class, 'getByJenisLayanan'])
+        ->name('vendor.by-jenis-layanan');
+
+    // API routes untuk AJAX requests
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/jenis-limbah', [JenisLimbahController::class, 'apiIndex'])->name('jenis-limbah.index');
+        Route::get('/jenis-limbah/{jenisLimbah}', [JenisLimbahController::class, 'apiShow'])->name('jenis-limbah.show');
+    });
+
+    // API penyimpanan
+    Route::get('/api/penyimpanan-by-jenis-limbah', [LaporanHarianController::class, 'getPenyimpananByJenisLimbah'])
+        ->name('api.penyimpanan-by-jenis-limbah');
+
+    // Perusahaan index route (accessible by all authenticated users)
+    Route::get('/perusahaan', [PerusahaanController::class, 'index'])->name('perusahaan.index');
+
+    // User management routes (accessible by admin only)
+    Route::middleware('admin')->group(function () {
+        Route::resource('users', UserController::class)->except(['show']);
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::put('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('/users/{user}/password/edit', [UserController::class, 'editPassword'])->name('users.password.edit');
+        Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
+    });
 });
-
-// Perusahaan Routes
-Route::middleware(['auth'])->group(function () {
-    // Route untuk membuat profil perusahaan (tanpa middleware perusahaan)
-    Route::get('/perusahaan/create', [PerusahaanController::class, 'create'])
-        ->name('perusahaan.create');
-    Route::post('/perusahaan', [PerusahaanController::class, 'store'])
-        ->name('perusahaan.store');
-
-    // Route untuk melihat daftar perusahaan (semua user bisa akses)
-    Route::get('/perusahaan', [PerusahaanController::class, 'index'])
-        ->name('perusahaan.index');
-    
-    // PENTING: Dashboard harus di atas route {perusahaan} agar tidak bentrok
-    Route::get('/perusahaan/dashboard', [PerusahaanController::class, 'dashboard'])
-        ->middleware('perusahaan')
-        ->name('perusahaan.dashboard');
-    
-    // Route untuk melihat detail perusahaan (semua user bisa akses)
-    Route::get('/perusahaan/{perusahaan}', [PerusahaanController::class, 'show'])
-        ->name('perusahaan.show');
-
-    // Route edit hanya untuk pemilik perusahaan atau admin
-    Route::get('/perusahaan/{perusahaan}/edit', [PerusahaanController::class, 'edit'])
-        ->middleware('perusahaan')
-        ->name('perusahaan.edit');
-    Route::put('/perusahaan/{perusahaan}', [PerusahaanController::class, 'update'])
-        ->middleware('perusahaan')
-        ->name('perusahaan.update');
-    Route::resource('/laporan-harian', LaporanHarianController::class);
-    Route::resource('/penyimpanan', PenyimpananController::class);
-});
-
-
-
-// Admin Routes
-// Admin Routes
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    
-    // User Management
-    Route::get('/users', [AdminController::class, 'users'])->name('users.index');
-    Route::get('/users/{user}', [AdminController::class, 'showUser'])->name('users.show');
-    Route::put('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
-    Route::delete('/users/{user}', [AdminController::class, 'destroyUser'])->name('users.destroy');
-    
-    // Perusahaan Management - menggunakan view yang sudah ada
-    Route::get('/perusahaan', [AdminController::class, 'perusahaan'])->name('perusahaan.index');
-    
-    // Jenis Limbah Management - menggunakan view yang sudah ada
-    Route::get('/jenis-limbah', [AdminController::class, 'jenisLimbah'])->name('jenis-limbah.index');
-    
-    // Vendor Management - menggunakan view yang sudah ada
-    Route::get('/vendor', [AdminController::class, 'vendor'])->name('vendor.index');
-});
-
-
-require __DIR__ . '/auth.php';

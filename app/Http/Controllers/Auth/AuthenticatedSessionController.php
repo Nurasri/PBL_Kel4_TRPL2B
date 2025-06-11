@@ -28,51 +28,37 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $request->session()->regenerate();
+
         $user = Auth::user();
 
-        // Check if user is active
-        if (!$user->isActive()) {
-            Auth::logout();
-            Session::invalidate();
-            Session::regenerateToken();
-            
-            return redirect()->route('login')
-                ->with('error', 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.');
-        }
-
-        // Update last login info
+        // Update last login
         $user->updateLastLogin();
 
-        Session::regenerate();
-
+        // Redirect berdasarkan role
         try {
             if ($user->isAdmin()) {
-                return redirect()->route('admin.dashboard');
-            }
-            
-            if ($user->isPerusahaan()) {
-                // Check if company profile exists
-                if (!$user->perusahaan) {
+                return redirect()->intended(route('admin.dashboard'));
+            } elseif ($user->isPerusahaan()) {
+                // Periksa apakah user memiliki perusahaan
+                if (!$user->hasValidPerusahaan()) {
                     return redirect()->route('perusahaan.create')
-                        ->with('warning', 'Silakan lengkapi profil perusahaan Anda.');
+                        ->with('info', 'Silakan lengkapi profil perusahaan Anda terlebih dahulu.');
                 }
-                return redirect()->route('perusahaan.dashboard');
+                return redirect()->intended(route('perusahaan.dashboard'));
+            } else {
+                // Role tidak dikenali
+                Auth::logout();
+                return redirect()->route('login')
+                    ->with('error', 'Role pengguna tidak valid.');
             }
-
-            // If somehow the user has an invalid role, log them out
-            Auth::logout();
-            Session::invalidate();
-            Session::regenerateToken();
-            
-            return redirect()->route('login')
-                ->with('error', 'Akun Anda tidak memiliki akses yang valid.');
         } catch (\Exception $e) {
             Auth::logout();
             Session::invalidate();
             Session::regenerateToken();
             
             return redirect()->route('login')
-                ->with('error', 'Terjadi kesalahan saat mengalihkan halaman. Silakan coba lagi.');
+                ->with('error', 'Terjadi kesalahan saat login: ' . $e->getMessage());
         }
     }
 

@@ -4,41 +4,63 @@ namespace App\Http\Controllers;
 
 use App\Models\Vendor;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class VendorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct()
     {
-        $vendors = Vendor::latest()->paginate(10);
+        $this->middleware('auth');
+
+    }
+
+    /**
+     * Display a listing of vendors (untuk semua user)
+     */
+    public function index(Request $request): View
+    {
+        $query = Vendor::query();
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $query->search($request->search);
+        }
+
+        // Filter by jenis layanan
+        if ($request->filled('jenis_layanan')) {
+            $query->byJenisLayanan($request->jenis_layanan);
+        }
+
+        // Filter by status - hanya tampilkan yang aktif untuk perusahaan
+        if (auth()->user()->isPerusahaan()) {
+            $query->active();
+        } elseif ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $vendors = $query->latest()->paginate(10)->withQueryString();
+
         return view('vendor.index', compact('vendors'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new vendor (admin only)
      */
-    public function create()
+    public function create(): View
     {
         return view('vendor.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created vendor (admin only)
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'nama_perusahaan' => 'required|string|max:255',
-            'nama_pic' => 'required|string|max:255',
-            'email' => 'required|email|unique:vendors',
-            'telepon' => 'required|string|max:20',
-            'alamat' => 'required|string',
-            'jenis_layanan' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'status' => 'required|in:aktif,tidak_aktif'
-        ]);
+        $request->validate(
+            Vendor::validationRules(),
+            Vendor::validationMessages()
+        );
 
         Vendor::create($request->all());
 
@@ -47,51 +69,80 @@ class VendorController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified vendor
      */
-    public function show(Vendor $vendor)
+    public function show(Vendor $vendor): View
     {
         return view('vendor.show', compact('vendor'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified vendor (admin only)
      */
-    public function edit(Vendor $vendor)
+    public function edit(Vendor $vendor): View
     {
         return view('vendor.edit', compact('vendor'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified vendor (admin only)
      */
-    public function update(Request $request, Vendor $vendor)
+    public function update(Request $request, Vendor $vendor): RedirectResponse
     {
-        $request->validate([
-            'nama_perusahaan' => 'required|string|max:255',
-            'nama_pic' => 'required|string|max:255',
-            'email' => 'required|email|unique:vendors,email,' . $vendor->id,
-            'telepon' => 'required|string|max:20',
-            'alamat' => 'required|string',
-            'jenis_layanan' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'status' => 'required|in:aktif,tidak_aktif'
-        ]);
+        $request->validate(
+            Vendor::validationRules($vendor->id),
+            Vendor::validationMessages()
+        );
 
         $vendor->update($request->all());
 
         return redirect()->route('vendor.index')
-            ->with('success', 'Data vendor berhasil diperbarui.');
+            ->with('success', 'Vendor berhasil diperbarui.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified vendor (admin only)
      */
-    public function destroy(Vendor $vendor)
+    public function destroy(Vendor $vendor): RedirectResponse
     {
-        $vendor->delete();
+        try {
+            $vendor->delete();
+            return redirect()->route('vendor.index')
+                ->with('success', 'Vendor berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->route('vendor.index')
+                ->with('error', 'Gagal menghapus vendor. Vendor mungkin masih digunakan.');
+        }
+    }
 
-        return redirect()->route('vendor.index')
-            ->with('success', 'Vendor berhasil dihapus.');
+    /**
+     * Toggle vendor status (admin only)
+     */
+    public function toggleStatus(Vendor $vendor): RedirectResponse
+    {
+        $newStatus = $vendor->status === 'aktif' ? 'tidak_aktif' : 'aktif';
+        $vendor->update(['status' => $newStatus]);
+
+        $statusText = $newStatus === 'aktif' ? 'diaktifkan' : 'dinonaktifkan';
+        
+        return redirect()->back()
+            ->with('success', "Vendor berhasil {$statusText}.");
+    }
+
+    /**
+     * Get vendors by jenis layanan (for AJAX)
+     */
+    public function getByJenisLayanan(Request $request)
+    {
+        $jenisLayanan = $request->get('jenis_layanan');
+        
+        $vendors = Vendor::active()
+            ->when($jenisLayanan, function ($query) use ($jenisLayanan) {
+                return $query->byJenisLayanan($jenisLayanan);
+            })
+            ->select('id', 'nama_perusahaan', 'nama_pic', 'telepon')
+            ->get();
+
+        return response()->json($vendors);
     }
 }

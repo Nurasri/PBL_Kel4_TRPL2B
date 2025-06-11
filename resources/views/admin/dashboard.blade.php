@@ -73,7 +73,7 @@
                     <a href="{{ route('admin.perusahaan.index') }}" class="block px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">
                         Kelola Perusahaan
                     </a>
-                    <a href="{{ route('admin.jenis-limbah.index') }}" class="block px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">
+                    <a href="{{ route('jenis-limbah.index') }}" class="block px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">
                         Kelola Jenis Limbah
                     </a>
                 </div>

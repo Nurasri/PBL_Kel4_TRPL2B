@@ -8,8 +8,8 @@
                 Buat Profil Perusahaan
             </h2>
             @if(auth()->user()->isAdmin())
-                <a href="{{ route('admin.perusahaan.index') }}" 
-                   class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-gray-600 border border-transparent rounded-lg active:bg-gray-600 hover:bg-gray-700 focus:outline-none focus:shadow-outline-gray">
+                <a href="{{ route('admin.perusahaan.index') }}"
+                    class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-gray-600 border border-transparent rounded-lg active:bg-gray-600 hover:bg-gray-700 focus:outline-none focus:shadow-outline-gray">
                     Kembali
                 </a>
             @endif
@@ -22,11 +22,7 @@
                 <!-- Nama Perusahaan -->
                 <label class="block text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Nama Perusahaan</span>
-                    <input type="text" 
-                           name="nama_perusahaan" 
-                           value="{{ old('nama_perusahaan') }}"
-                           class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400 dark:text-gray-300 form-input"
-                           required />
+                    <x-input type="text" name="nama_perusahaan" value="{{ old('nama_perusahaan') }}" required />
                     @error('nama_perusahaan')
                         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
                     @enderror
@@ -35,10 +31,7 @@
                 <!-- Alamat -->
                 <label class="block mt-4 text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Alamat</span>
-                    <textarea name="alamat" 
-                              rows="3" 
-                              class="block w-full mt-1 text-sm dark:text-gray-300 dark:border-gray-600 dark:bg-gray-700 form-textarea focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:focus:shadow-outline-green"
-                              required>{{ old('alamat') }}</textarea>
+                    <x-textarea name="alamat" rows="3" required>{{ old('alamat') }}</x-textarea>
                     @error('alamat')
                         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
                     @enderror
@@ -47,11 +40,7 @@
                 <!-- Nomor Telepon -->
                 <label class="block mt-4 text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Nomor Telepon</span>
-                    <input type="text" 
-                           name="no_telp" 
-                           value="{{ old('no_telp') }}"
-                           class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
-                           required />
+                    <x-input type="text" name="no_telp" value="{{ old('no_telp') }}" required />
                     @error('no_telp')
                         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
                     @enderror
@@ -60,11 +49,7 @@
                 <!-- Jenis Usaha -->
                 <label class="block mt-4 text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Jenis Usaha</span>
-                    <input type="text" 
-                           name="jenis_usaha" 
-                           value="{{ old('jenis_usaha') }}"
-                           class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
-                           required />
+                    <x-input type="text" name="jenis_usaha" value="{{ old('jenis_usaha') }}" required />
                     @error('jenis_usaha')
                         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
                     @enderror
@@ -73,11 +58,7 @@
                 <!-- Nomor Registrasi -->
                 <label class="block mt-4 text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Nomor Registrasi</span>
-                    <input type="text" 
-                           name="no_registrasi" 
-                           value="{{ old('no_registrasi') }}"
-                           class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
-                           required />
+                    <x-input type="text" name="no_registrasi" value="{{ old('no_registrasi') }}" required />
                     @error('no_registrasi')
                         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
                     @enderror
@@ -86,9 +67,8 @@
                 <!-- Deskripsi -->
                 <label class="block mt-4 text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Deskripsi</span>
-                    <textarea name="deskripsi" 
-                              rows="4" 
-                              class="block w-full mt-1 text-sm dark:text-gray-300 dark:border-gray-600 dark:bg-gray-700 form-textarea focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:focus:shadow-outline-green">{{ old('deskripsi') }}</textarea>
+                    <x-textarea name="deskripsi" rows="4">{{ old('deskripsi') }}
+                    </x-textarea>
                     @error('deskripsi')
                         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
                     @enderror
@@ -97,10 +77,7 @@
                 <!-- Logo -->
                 <label class="block mt-4 text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Logo Perusahaan</span>
-                    <input type="file" 
-                           name="logo" 
-                           class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
-                           accept="image/*" />
+                    <x-input type="file" name="logo" accept="image/*" />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PNG, JPG atau JPEG (Maks. 2MB)</p>
                     @error('logo')
                         <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span>
@@ -109,11 +86,11 @@
 
                 <div class="flex items-center justify-end mt-6">
                     <button type="submit"
-                            class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg active:bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">
+                        class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg active:bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">
                         Simpan
                     </button>
                 </div>
             </form>
         </div>
     </div>
-</x-app> 
+</x-app>
