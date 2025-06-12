@@ -2,114 +2,88 @@
     <x-slot:title>
         Detail Perusahaan
     </x-slot:title>
-    <div class="container px-6 mx-auto grid">
-        <div class="flex justify-between items-center">
-            <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                Detail Perusahaan
-            </h2>
-            <div class="flex space-x-4">
-                @if(auth()->user()->id === $perusahaan->user_id)
-                    <a href="{{ route('perusahaan.edit', $perusahaan) }}" 
-                       class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
-                        Edit Profil
-                    </a>
+    <div class="container max-w-2xl mx-auto py-8">
+        <h2 class="mb-6 text-2xl font-bold text-gray-800 dark:text-gray-100">Detail Perusahaan</h2>
+
+        @if(session('success'))
+            <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-800"
+                role="alert">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('info'))
+            <div class="p-4 mb-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
+                role="alert">
+                {{ session('info') }}
+            </div>
+        @endif
+
+        <x-card>
+            <div class="space-y-6">
+                <div>
+                    <x-label>Nama Perusahaan</x-label>
+                    <div class="text-gray-900 dark:text-gray-100 font-semibold">{{ $perusahaan->nama_perusahaan }}</div>
+                </div>
+                <div>
+                    <x-label>Nomor Registrasi</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->no_registrasi }}</div>
+                </div>
+                <div>
+                    <x-label>Jenis Usaha</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->jenis_usaha }}</div>
+                </div>
+                <div>
+                    <x-label>Alamat</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->alamat }}</div>
+                </div>
+                <div>
+                    <x-label>Telepon</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->telepon }}</div>
+                </div>
+                <div>
+                    <x-label>Email</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->email }}</div>
+                </div>
+                <div>
+                    <x-label>Deskripsi</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->deskripsi ?: '-' }}</div>
+                </div>
+                <div>
+                    <x-label>Logo</x-label>
+                    <div class="mt-2">
+                        @if($perusahaan->logo)
+                            <img src="{{ Storage::url($perusahaan->logo) }}" alt="Logo {{ $perusahaan->nama_perusahaan }}"
+                                class="w-32 h-32 object-cover rounded-lg">
+                        @else
+                            <div class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <span class="text-gray-500">No Logo</span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <div>
+                    <x-label>Terdaftar Pada</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->created_at->format('d F Y H:i') }}
+                    </div>
+                </div>
+                <div>
+                    <x-label>Terakhir Diperbarui</x-label>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->updated_at->format('d F Y H:i') }}
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end mt-8 space-x-2">
+                @if(auth()->user()->id === $perusahaan->user_id || auth()->user()->isAdmin())
+                    <a href="{{ route('perusahaan.edit', $perusahaan) }}"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition font-semibold">Edit
+                        Profil</a>
                 @endif
                 @if(auth()->user()->isAdmin())
-                    <a href="{{ route('admin.perusahaan.index') }}" 
-                       class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-gray-600 border border-transparent rounded-lg active:bg-gray-600 hover:bg-gray-700 focus:outline-none focus:shadow-outline-gray">
-                        Kembali
-                    </a>
+                    <a href="{{ route('perusahaan.index') }}"
+                        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition font-semibold">Kembali</a>
                 @endif
             </div>
-        </div>
-
-        <div class="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Informasi Dasar -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
-                        Informasi Dasar
-                    </h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Nama Perusahaan</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">{{ $perusahaan->nama_perusahaan }}</p>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Nomor Registrasi</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">{{ $perusahaan->no_registrasi }}</p>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Jenis Usaha</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">{{ $perusahaan->jenis_usaha }}</p>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Alamat</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">{{ $perusahaan->alamat }}</p>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Nomor Telepon</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">{{ $perusahaan->no_telp }}</p>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Deskripsi</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">{{ $perusahaan->deskripsi ?: '-' }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Informasi Tambahan -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
-                        Informasi Tambahan
-                    </h3>
-
-                    <div class="space-y-4">
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Pemilik</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">
-                                {{ $perusahaan->user->name }}
-                                <span class="text-sm text-gray-500">({{ $perusahaan->user->email }})</span>
-                            </p>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Logo Perusahaan</span>
-                            <div class="mt-2">
-                                @if($perusahaan->logo)
-                                    <img src="{{ asset('storage/' . $perusahaan->logo) }}" 
-                                         alt="Logo {{ $perusahaan->nama_perusahaan }}" 
-                                         class="w-32 h-32 object-cover rounded-lg">
-                                @else
-                                    <div class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                                        <span class="text-gray-500">No Logo</span>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Terdaftar Pada</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">
-                                {{ $perusahaan->created_at->format('d F Y H:i') }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Terakhir Diperbarui</span>
-                            <p class="mt-1 text-gray-700 dark:text-gray-200">
-                                {{ $perusahaan->updated_at->format('d F Y H:i') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </x-card>
     </div>
-</x-app> 
+</x-app>
