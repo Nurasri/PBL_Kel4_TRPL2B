@@ -1,17 +1,18 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PerusahaanController;
 use App\Http\Controllers\JenisLimbahController;
-use App\Http\Controllers\LaporanHarianController;
 use App\Http\Controllers\PenyimpananController;
-use App\Http\Controllers\VendorController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\AdminController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LaporanHarianController;
+use App\Http\Controllers\PengelolaanLimbahController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('frontend.welcome');
 });
 
 // Authentication routes
@@ -43,7 +44,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::get('/users/{user}/password/edit', [UserController::class, 'editPassword'])->name('users.password.edit');
         Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
-       
+
         // Perusahaan management
         Route::get('/perusahaan', [PerusahaanController::class, 'adminIndex'])->name('perusahaan.index');
         Route::get('/perusahaan/{perusahaan}', [PerusahaanController::class, 'adminShow'])->name('perusahaan.show');
@@ -76,8 +77,33 @@ Route::middleware('auth')->group(function () {
         Route::post('/laporan-harian/bulk-action', [LaporanHarianController::class, 'bulkAction'])
             ->name('laporan-harian.bulk-action');
 
+        // pengelolaan limbah
+        Route::resource('pengelolaan-limbah', PengelolaanLimbahController::class);
+
+        // Update status pengelolaan
+        Route::put('/pengelolaan-limbah/{pengelolaanLimbah}/update-status', [PengelolaanLimbahController::class, 'updateStatus'])
+            ->name('pengelolaan-limbah.update-status');
+
+        // Export pengelolaan limbah
+        Route::get('/pengelolaan-limbah/export/csv', [PengelolaanLimbahController::class, 'export'])
+            ->name('pengelolaan-limbah.export');
+
+        // API routes untuk pengelolaan limbah
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/pengelolaan-limbah/{pengelolaanLimbah}/stok-info', [PengelolaanLimbahController::class, 'getStokInfo'])
+                ->name('pengelolaan-limbah.stok-info');
+
+            Route::get('/pengelolaan-limbah/penyimpanan-by-jenis', [PengelolaanLimbahController::class, 'getPenyimpananByJenisLimbah'])
+                ->name('pengelolaan-limbah.penyimpanan-by-jenis');
+
+            Route::get('/pengelolaan-limbah/jenis-limbah-details', [PengelolaanLimbahController::class, 'getJenisLimbahDetails'])
+                ->name('pengelolaan-limbah.jenis-limbah-details');
+
+            Route::get('/pengelolaan-limbah/statistics', [PengelolaanLimbahController::class, 'getStatistics'])
+                ->name('pengelolaan-limbah.statistics');
+        });
+
         // API penyimpanan
-       
         Route::get('/api/jenis-limbah-info', [LaporanHarianController::class, 'getJenisLimbahInfo'])
             ->name('api.jenis-limbah-info');
         Route::get('/api/laporan-statistics', [LaporanHarianController::class, 'getStatistics'])
@@ -87,13 +113,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('penyimpanan', PenyimpananController::class);
         Route::put('/penyimpanan/{penyimpanan}/update-kapasitas', [PenyimpananController::class, 'updateKapasitas'])
             ->name('penyimpanan.update-kapasitas');
+    
+        // API routes untuk AJAX requests
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/penyimpanan-by-jenis-limbah', [LaporanHarianController::class, 'getPenyimpananByJenisLimbah'])
+                ->name('penyimpanan-by-jenis-limbah');
+        });
     });
-
-    // API routes untuk AJAX
-    Route::middleware(['auth', 'perusahaan'])->group(function () {
-         Route::get('/api/penyimpanan-by-jenis-limbah', [LaporanHarianController::class, 'getPenyimpananByJenisLimbah'])
-             ->name('api.penyimpanan-by-jenis-limbah');
-    });
+    
 
 
     // Perusahaan profile routes (untuk membuat dan mengelola profil perusahaan)
@@ -117,10 +144,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/jenis-limbah/{jenisLimbah}', [JenisLimbahController::class, 'apiShow'])->name('jenis-limbah.show');
     });
 
-    // API penyimpanan
-    Route::get('/api/penyimpanan-by-jenis-limbah', [LaporanHarianController::class, 'getPenyimpananByJenisLimbah'])
-        ->name('api.penyimpanan-by-jenis-limbah');
-
+   
     // Perusahaan index route (accessible by all authenticated users)
     Route::get('/perusahaan', [PerusahaanController::class, 'index'])->name('perusahaan.index');
 

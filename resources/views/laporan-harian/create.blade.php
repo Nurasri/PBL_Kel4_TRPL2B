@@ -31,11 +31,16 @@
                     <!-- Kolom Kiri -->
                     <div class="space-y-4">
                         <x-form-group label="Tanggal Laporan" name="tanggal" required>
-                            <x-input type="date" name="tanggal" value="{{ old('tanggal', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required />
+                            <x-input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required />
                         </x-form-group>
 
-                        <x-form-group label="Jenis Limbah" name="jenis_limbah_id" required>
-                            <x-select name="jenis_limbah_id" id="jenis_limbah_select" required>
+                        <!-- Jenis Limbah - Ganti dengan HTML biasa -->
+                        <div class="mb-4">
+                            <label for="jenis_limbah_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Jenis Limbah <span class="text-red-500">*</span>
+                            </label>
+                            <select name="jenis_limbah_id" id="jenis_limbah_select" required 
+                                    class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400">
                                 <option value="">Pilih Jenis Limbah</option>
                                 @foreach($jenisLimbahs as $jenis)
                                     <option value="{{ $jenis->id }}" 
@@ -44,16 +49,26 @@
                                         {{ $jenis->nama }} ({{ $jenis->kode_limbah }})
                                     </option>
                                 @endforeach
-                            </x-select>
-                        </x-form-group>
+                            </select>
+                        </div>
 
-                        <x-form-group label="Penyimpanan" name="penyimpanan_id" required>
-                            <x-select name="penyimpanan_id" id="penyimpanan_select" required>
+                        <!-- Penyimpanan - Ganti dengan HTML biasa -->
+                        <div class="mb-4">
+                            <label for="penyimpanan_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Penyimpanan <span class="text-red-500">*</span>
+                            </label>
+                            <select name="penyimpanan_id" id="penyimpanan_select" required 
+                                    class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400">
                                 <option value="">Pilih jenis limbah terlebih dahulu</option>
-                            </x-select>
+                            </select>
                             
-                            <div id="penyimpanan-info" class="hidden mt-2 p-3 bg-blue-50 rounded-lg">
-                                <div class="text-sm text-blue-700">
+                            <!-- Debug info -->
+                            <div id="debug-info" class="mt-1 text-xs text-gray-500">
+                                Status: <span id="debug-status">Menunggu pilihan jenis limbah...</span>
+                            </div>
+                            
+                            <div id="penyimpanan-info" class="hidden mt-2 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                                <div class="text-sm text-blue-700 dark:text-blue-300">
                                     <div class="flex justify-between mb-1">
                                         <span>Sisa Kapasitas:</span>
                                         <span id="sisa-kapasitas" class="font-medium">-</span>
@@ -67,17 +82,22 @@
                                     </div>
                                 </div>
                             </div>
-                        </x-form-group>
+                        </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <x-form-group label="Jumlah" name="jumlah" required>
-                                <x-input type="number" name="jumlah" step="0.01" min="0.01" 
+                                <x-input type="number" id="jumlah" name="jumlah" step="0.01" min="0.01" 
                                          value="{{ old('jumlah') }}" placeholder="0.00" required />
                             </x-form-group>
 
-                            <x-form-group label="Satuan" name="satuan">
-                                <x-input name="satuan" id="satuan_display" readonly placeholder="Pilih jenis limbah" class="bg-gray-50" />
-                            </x-form-group>
+                            <!-- Satuan - Ganti dengan HTML biasa -->
+                            <div class="mb-4">
+                                <label for="satuan_display" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Satuan
+                                </label>
+                                <input type="text" name="satuan" id="satuan_display" readonly placeholder="Pilih jenis limbah" 
+                                       class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
+                            </div>
                         </div>
                     </div>
 
@@ -88,15 +108,23 @@
                                         placeholder="Catatan tambahan tentang laporan ini...">{{ old('keterangan') }}</x-textarea>
                         </x-form-group>
 
+                        <!-- Info Jenis Limbah -->
+                        <div id="jenis-limbah-info" class="hidden p-4 bg-green-50 dark:bg-green-900 rounded-lg">
+                            <h4 class="font-medium text-green-800 dark:text-green-200 mb-2">Informasi Jenis Limbah</h4>
+                            <div id="limbah-details" class="text-sm text-green-700 dark:text-green-300 space-y-1">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+
                         <!-- Peringatan Kapasitas -->
-                        <div id="kapasitas-warning" class="hidden p-4 bg-yellow-50 rounded-lg">
+                        <div id="kapasitas-warning" class="hidden p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
                             <div class="flex">
                                 <svg class="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                                 </svg>
                                 <div>
-                                    <h4 class="font-medium text-yellow-800">Peringatan Kapasitas</h4>
-                                    <p id="kapasitas-warning-text" class="text-sm text-yellow-700 mt-1"></p>
+                                    <h4 class="font-medium text-yellow-800 dark:text-yellow-200">Peringatan Kapasitas</h4>
+                                    <p id="kapasitas-warning-text" class="text-sm text-yellow-700 dark:text-yellow-300 mt-1"></p>
                                 </div>
                             </div>
                         </div>
@@ -119,142 +147,322 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const jenisLimbahSelect = document.getElementById('jenis_limbah_select');
-            const penyimpananSelect = document.getElementById('penyimpanan_select');
-            const satuanDisplay = document.getElementById('satuan_display');
-            const penyimpananInfo = document.getElementById('penyimpanan-info');
-            const jumlahInput = document.querySelector('input[name="jumlah"]');
-            const kapasitasWarning = document.getElementById('kapasitas-warning');
-            const submitBtn = document.getElementById('submit-btn');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+    
+    // Get elements with null checking
+    const jenisLimbahSelect = document.getElementById('jenis_limbah_select');
+    const penyimpananSelect = document.getElementById('penyimpanan_select');
+    const satuanDisplay = document.getElementById('satuan_display');
+    const penyimpananInfo = document.getElementById('penyimpanan-info');
+    const jenisLimbahInfo = document.getElementById('jenis-limbah-info');
+    const limbahDetails = document.getElementById('limbah-details');
+    const jumlahInput = document.querySelector('input[name="jumlah"]');
+    const kapasitasWarning = document.getElementById('kapasitas-warning');
+    const submitBtn = document.getElementById('submit-btn');
+    const debugStatus = document.getElementById('debug-status');
 
-            let currentPenyimpananData = null;
+    // Check if all required elements exist
+    console.log('Element check:');
+    console.log('jenisLimbahSelect:', jenisLimbahSelect);
+    console.log('penyimpananSelect:', penyimpananSelect);
+    console.log('satuanDisplay:', satuanDisplay);
+    console.log('jumlahInput:', jumlahInput);
+    console.log('submitBtn:', submitBtn);
 
-            // Handle jenis limbah change
-            jenisLimbahSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                
-                if (selectedOption.value) {
-                    const satuan = selectedOption.dataset.satuan;
-                    satuanDisplay.value = satuan;
-                    loadPenyimpananOptions(selectedOption.value);
-                } else {
-                    satuanDisplay.value = '';
-                    penyimpananInfo.classList.add('hidden');
-                    penyimpananSelect.innerHTML = '<option value="">Pilih jenis limbah terlebih dahulu</option>';
-                }
-            });
+    // Exit if critical elements don't exist
+    if (!jenisLimbahSelect || !penyimpananSelect || !satuanDisplay) {
+        console.error('Critical elements not found!');
+        return;
+    }
 
-                        // Handle penyimpanan change
-            penyimpananSelect.addEventListener('change', function() {
-                if (this.value && currentPenyimpananData) {
-                    const selected = currentPenyimpananData.find(p => p.id == this.value);
-                    if (selected) {
-                        updatePenyimpananInfo(selected);
-                        checkKapasitas();
-                    }
-                } else {
-                    penyimpananInfo.classList.add('hidden');
-                    kapasitasWarning.classList.add('hidden');
-                }
-            });
+    let currentPenyimpananData = null;
 
-            // Handle jumlah change
-            jumlahInput.addEventListener('input', checkKapasitas);
+    // Handle jenis limbah change
+    jenisLimbahSelect.addEventListener('change', function() {
+        console.log('Jenis limbah changed to:', this.value);
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (selectedOption.value) {
+            const satuan = selectedOption.dataset.satuan;
+            satuanDisplay.value = satuan;
+            
+            // Show jenis limbah info
+            showJenisLimbahInfo(selectedOption);
+            
+            // Load penyimpanan options
+            loadPenyimpananOptions(selectedOption.value);
+        } else {
+            resetForm();
+        }
+    });
 
-            // Load penyimpanan options via AJAX
-            function loadPenyimpananOptions(jenisLimbahId) {
-                penyimpananSelect.innerHTML = '<option value="">Loading...</option>';
-                penyimpananSelect.disabled = true;
-
-                fetch(`{{ route('api.penyimpanan-by-jenis-limbah') }}?jenis_limbah_id=${jenisLimbahId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        currentPenyimpananData = data;
-                        
-                        penyimpananSelect.disabled = false;
-                        penyimpananSelect.innerHTML = '<option value="">Pilih Penyimpanan</option>';
-                        
-                        if (data.length === 0) {
-                            penyimpananSelect.innerHTML = '<option value="">Tidak ada penyimpanan tersedia</option>';
-                        } else {
-                            data.forEach(penyimpanan => {
-                                const option = document.createElement('option');
-                                option.value = penyimpanan.id;
-                                option.textContent = `${penyimpanan.nama_penyimpanan} - ${penyimpanan.lokasi}`;
-                                option.selected = {{ old('penyimpanan_id') ?: 'null' }} == penyimpanan.id;
-                                penyimpananSelect.appendChild(option);
-                            });
-                        }
-                        
-                        // Trigger change if there's old value
-                        if ({{ old('penyimpanan_id') ?: 'null' }}) {
-                            penyimpananSelect.dispatchEvent(new Event('change'));
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading penyimpanan:', error);
-                        penyimpananSelect.disabled = false;
-                        penyimpananSelect.innerHTML = '<option value="">Error loading data</option>';
-                    });
+    // Handle penyimpanan change
+    penyimpananSelect.addEventListener('change', function() {
+        console.log('Penyimpanan changed to:', this.value);
+        if (this.value && currentPenyimpananData) {
+            const selected = currentPenyimpananData.find(p => p.id == this.value);
+            if (selected) {
+                updatePenyimpananInfo(selected);
+                checkKapasitas();
             }
+        } else {
+            if (penyimpananInfo) penyimpananInfo.classList.add('hidden');
+            if (kapasitasWarning) kapasitasWarning.classList.add('hidden');
+        }
+    });
 
-            // Update penyimpanan info display
-            function updatePenyimpananInfo(penyimpanan) {
-                document.getElementById('sisa-kapasitas').textContent = 
-                    `${parseFloat(penyimpanan.sisa_kapasitas).toFixed(2)} ${penyimpanan.satuan}`;
-                
-                document.getElementById('kapasitas-bar').style.width = `${penyimpanan.persentase_kapasitas}%`;
-                document.getElementById('kapasitas-bar').className = 
-                    `bg-${penyimpanan.status_kapasitas_color}-600 h-2 rounded-full`;
-                
-                document.getElementById('status-kapasitas').textContent = penyimpanan.status_kapasitas_text;
-                document.getElementById('persentase-kapasitas').textContent = `${penyimpanan.persentase_kapasitas}%`;
-                
-                penyimpananInfo.classList.remove('hidden');
+    // Handle jumlah change
+    if (jumlahInput) {
+        jumlahInput.addEventListener('input', checkKapasitas);
+    }
+
+    // Show jenis limbah info
+    function showJenisLimbahInfo(selectedOption) {
+        if (!jenisLimbahInfo || !limbahDetails) return;
+        
+        const jenisLimbahId = selectedOption.value;
+        const nama = selectedOption.textContent;
+        
+        limbahDetails.innerHTML = `
+            <div><strong>Nama:</strong> ${nama}</div>
+            <div><strong>Satuan:</strong> ${selectedOption.dataset.satuan}</div>
+        `;
+        
+        jenisLimbahInfo.classList.remove('hidden');
+    }
+
+    // Load penyimpanan options via AJAX
+    function loadPenyimpananOptions(jenisLimbahId) {
+        console.log('=== Loading penyimpanan for jenis limbah ID:', jenisLimbahId, '===');
+        
+        // Update debug status
+        if (debugStatus) {
+            debugStatus.textContent = 'Memuat data penyimpanan...';
+        }
+        
+        // Reset dropdown
+        penyimpananSelect.innerHTML = '<option value="">Loading...</option>';
+        penyimpananSelect.disabled = true;
+
+        // Construct URL
+        const url = `{{ route('api.penyimpanan-by-jenis-limbah') }}?jenis_limbah_id=${jenisLimbahId}`;
+        console.log('Fetching URL:', url);
+
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
             }
-
-            // Check kapasitas and show warning
-            function checkKapasitas() {
-                const jumlah = parseFloat(jumlahInput.value) || 0;
-                const selectedPenyimpanan = penyimpananSelect.value;
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('=== Received data ===');
+            console.log('Data type:', typeof data);
+            console.log('Data length:', Array.isArray(data) ? data.length : 'Not array');
+            console.log('Full data:', data);
+            
+            // Store data
+            currentPenyimpananData = data;
+            
+            // Enable dropdown
+            penyimpananSelect.disabled = false;
+            
+            // Clear dropdown
+            penyimpananSelect.innerHTML = '';
+            
+            // Add default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Pilih Penyimpanan';
+            penyimpananSelect.appendChild(defaultOption);
+            
+            // Check if data exists and is array
+            if (!Array.isArray(data) || data.length === 0) {
+                const noDataOption = document.createElement('option');
+                noDataOption.value = '';
+                noDataOption.textContent = 'Tidak ada penyimpanan tersedia untuk jenis limbah ini';
+                penyimpananSelect.appendChild(noDataOption);
                 
-                if (jumlah > 0 && selectedPenyimpanan && currentPenyimpananData) {
-                    const penyimpanan = currentPenyimpananData.find(p => p.id == selectedPenyimpanan);
+                if (debugStatus) {
+                    debugStatus.textContent = 'Tidak ada penyimpanan ditemukan';
+                }
+                console.log('No penyimpanan found for this jenis limbah');
+            } else {
+                // Add options
+                data.forEach((penyimpanan, index) => {
+                    console.log(`Adding option ${index + 1}:`, penyimpanan);
                     
-                    if (penyimpanan) {
-                        const sisaKapasitas = parseFloat(penyimpanan.sisa_kapasitas);
-                        const warningText = document.getElementById('kapasitas-warning-text');
-                        
-                        if (jumlah > sisaKapasitas) {
-                            warningText.textContent = 
-                                `Jumlah limbah (${jumlah.toFixed(2)} ${penyimpanan.satuan}) melebihi sisa kapasitas penyimpanan (${sisaKapasitas.toFixed(2)} ${penyimpanan.satuan}).`;
-                            kapasitasWarning.classList.remove('hidden');
-                            submitBtn.disabled = true;
-                            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                        } else if (jumlah > (sisaKapasitas * 0.8)) {
-                            warningText.textContent = 
-                                `Peringatan: Jumlah limbah akan mengisi lebih dari 80% sisa kapasitas penyimpanan.`;
-                            kapasitasWarning.classList.remove('hidden');
-                            submitBtn.disabled = false;
-                            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        } else {
-                            kapasitasWarning.classList.add('hidden');
-                            submitBtn.disabled = false;
-                            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        }
+                    const option = document.createElement('option');
+                    option.value = penyimpanan.id;
+                    option.textContent = `${penyimpanan.nama_penyimpanan} - ${penyimpanan.lokasi} (Sisa: ${parseFloat(penyimpanan.sisa_kapasitas || 0).toFixed(2)} ${penyimpanan.satuan})`;
+                    
+                    // Check if this was previously selected
+                    const oldValue = {{ old('penyimpanan_id') ?: 'null' }};
+                    if (oldValue && oldValue == penyimpanan.id) {
+                        option.selected = true;
                     }
+                    
+                    penyimpananSelect.appendChild(option);
+                });
+                
+                if (debugStatus) {
+                    debugStatus.textContent = `${data.length} penyimpanan ditemukan`;
+                }
+                console.log(`Successfully added ${data.length} penyimpanan options`);
+            }
+            
+            // Trigger change if there's old value
+            const oldValue = {{ old('penyimpanan_id') ?: 'null' }};
+            if (oldValue) {
+                console.log('Triggering change for old value:', oldValue);
+                penyimpananSelect.dispatchEvent(new Event('change'));
+            }
+        })
+        .catch(error => {
+            console.error('=== Error loading penyimpanan ===');
+            console.error('Error:', error);
+            console.error('Error message:', error.message);
+            
+            if (debugStatus) {
+                debugStatus.textContent = 'Error: ' + error.message;
+            }
+            
+            penyimpananSelect.disabled = false;
+            penyimpananSelect.innerHTML = '';
+            
+            const errorOption = document.createElement('option');
+            errorOption.value = '';
+            errorOption.textContent = 'Error loading data - ' + error.message;
+            penyimpananSelect.appendChild(errorOption);
+        });
+    }
+
+    // Update penyimpanan info display
+    function updatePenyimpananInfo(penyimpanan) {
+        if (!penyimpananInfo) return;
+        
+        console.log('Updating penyimpanan info:', penyimpanan);
+        
+        const sisaKapasitas = parseFloat(penyimpanan.sisa_kapasitas || 0);
+        const persentaseKapasitas = penyimpanan.persentase_kapasitas || 0;
+        
+        const sisaKapasitasEl = document.getElementById('sisa-kapasitas');
+        const kapasitasBarEl = document.getElementById('kapasitas-bar');
+        const statusKapasitasEl = document.getElementById('status-kapasitas');
+        const persentaseKapasitasEl = document.getElementById('persentase-kapasitas');
+        
+        if (sisaKapasitasEl) {
+            sisaKapasitasEl.textContent = `${sisaKapasitas.toFixed(2)} ${penyimpanan.satuan}`;
+        }
+        
+        // Determine color based on remaining capacity percentage
+        let colorClass = 'bg-green-600';
+        let statusText = 'Kapasitas Tersedia';
+        
+        if (persentaseKapasitas >= 90) {
+            colorClass = 'bg-red-600';
+            statusText = 'Kapasitas Hampir Penuh';
+        } else if (persentaseKapasitas >= 70) {
+            colorClass = 'bg-yellow-600';
+            statusText = 'Kapasitas Terbatas';
+        }
+        
+        if (kapasitasBarEl) {
+            kapasitasBarEl.style.width = `${persentaseKapasitas}%`;
+            kapasitasBarEl.className = `${colorClass} h-2 rounded-full`;
+        }
+        
+        if (statusKapasitasEl) {
+            statusKapasitasEl.textContent = statusText;
+        }
+        
+        if (persentaseKapasitasEl) {
+            persentaseKapasitasEl.textContent = `${persentaseKapasitas.toFixed(1)}%`;
+        }
+        
+        penyimpananInfo.classList.remove('hidden');
+    }
+
+        // Check kapasitas and show warning
+    function checkKapasitas() {
+        if (!jumlahInput || !kapasitasWarning || !submitBtn) return;
+        
+        const jumlah = parseFloat(jumlahInput.value) || 0;
+        const selectedPenyimpanan = penyimpananSelect.value;
+        
+        if (jumlah > 0 && selectedPenyimpanan && currentPenyimpananData) {
+            const penyimpanan = currentPenyimpananData.find(p => p.id == selectedPenyimpanan);
+            
+            if (penyimpanan) {
+                const sisaKapasitas = parseFloat(penyimpanan.sisa_kapasitas || 0);
+                const warningTextEl = document.getElementById('kapasitas-warning-text');
+                
+                if (jumlah > sisaKapasitas) {
+                    if (warningTextEl) {
+                        warningTextEl.textContent = 
+                            `Jumlah limbah (${jumlah.toFixed(2)} ${penyimpanan.satuan}) melebihi sisa kapasitas penyimpanan (${sisaKapasitas.toFixed(2)} ${penyimpanan.satuan}).`;
+                    }
+                    kapasitasWarning.classList.remove('hidden');
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else if (jumlah > (sisaKapasitas * 0.8)) {
+                    if (warningTextEl) {
+                        warningTextEl.textContent = 
+                            `Peringatan: Jumlah limbah akan mengisi lebih dari 80% sisa kapasitas penyimpanan.`;
+                    }
+                    kapasitasWarning.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 } else {
                     kapasitasWarning.classList.add('hidden');
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
             }
+        } else {
+            kapasitasWarning.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
 
-            // Initialize if old values exist
-            @if(old('jenis_limbah_id'))
-                jenisLimbahSelect.dispatchEvent(new Event('change'));
-            @endif
-        });
-    </script>
+    // Reset form
+    function resetForm() {
+        console.log('Resetting form');
+        satuanDisplay.value = '';
+        if (penyimpananInfo) penyimpananInfo.classList.add('hidden');
+        if (jenisLimbahInfo) jenisLimbahInfo.classList.add('hidden');
+        if (kapasitasWarning) kapasitasWarning.classList.add('hidden');
+        penyimpananSelect.innerHTML = '<option value="">Pilih jenis limbah terlebih dahulu</option>';
+        penyimpananSelect.disabled = true;
+        currentPenyimpananData = null;
+        
+        if (debugStatus) {
+            debugStatus.textContent = 'Menunggu pilihan jenis limbah...';
+        }
+    }
+
+    // Initialize if old values exist
+    @if(old('jenis_limbah_id'))
+        console.log('Initializing with old jenis_limbah_id:', {{ old('jenis_limbah_id') }});
+        setTimeout(() => {
+            jenisLimbahSelect.dispatchEvent(new Event('change'));
+        }, 100);
+    @endif
+});
+</script>
+
+
 </x-app>

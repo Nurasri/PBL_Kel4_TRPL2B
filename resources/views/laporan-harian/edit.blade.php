@@ -36,89 +36,112 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Kolom Kiri -->
                     <div class="space-y-4">
-                        <x-form-group label="Tanggal Laporan" name="tanggal" required>
-                            <x-input type="date" name="tanggal" 
-                                     value="{{ old('tanggal', $laporanHarian->tanggal->format('Y-m-d')) }}" 
-                                     max="{{ date('Y-m-d') }}" required />
-                            <p class="mt-1 text-xs text-gray-500">Tanggal tidak boleh lebih dari hari ini</p>
-                        </x-form-group>
+                        <!-- Tanggal Laporan -->
+                        <div class="mb-4">
+                            <label for="tanggal" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Tanggal Laporan <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" name="tanggal" id="tanggal" 
+                                   value="{{ old('tanggal', $laporanHarian->tanggal->format('Y-m-d')) }}" 
+                                   max="{{ date('Y-m-d') }}" required
+                                   class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400" />
+                            @error('tanggal')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                        <x-form-group label="Jenis Limbah" name="jenis_limbah_id" required>
-                            <x-select name="jenis_limbah_id" id="jenis_limbah_select" required>
-                                <option value="">Pilih Jenis Limbah</option>
-                                @foreach($jenisLimbahs as $jenis)
-                                    <option value="{{ $jenis->id }}" 
-                                            data-satuan="{{ $jenis->satuan_default }}"
-                                            data-kategori="{{ $jenis->kategori }}"
-                                            data-kode="{{ $jenis->kode_limbah }}"
-                                            {{ old('jenis_limbah_id', $laporanHarian->jenis_limbah_id) == $jenis->id ? 'selected' : '' }}>
-                                        {{ $jenis->nama }} ({{ $jenis->kode_limbah }})
-                                    </option>
-                                @endforeach
-                            </x-select>
-                        </x-form-group>
-
-                        <x-form-group label="Penyimpanan" name="penyimpanan_id" required>
-                            <x-select name="penyimpanan_id" id="penyimpanan_select" required>
-                                <option value="">Loading...</option>
-                            </x-select>
-                            <div id="penyimpanan-info" class="hidden mt-2 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
-                                <div class="text-sm text-blue-700 dark:text-blue-300">
-                                    <div class="flex justify-between mb-1">
-                                        <span>Sisa Kapasitas:</span>
-                                        <span id="sisa-kapasitas" class="font-medium">-</span>
-                                    </div>
-                                    <div class="w-full bg-blue-200 rounded-full h-2">
-                                        <div id="kapasitas-bar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
-                                    </div>
-                                    <div class="flex justify-between text-xs mt-1">
-                                        <span id="status-kapasitas">-</span>
-                                        <span id="persentase-kapasitas">0%</span>
-                                    </div>
+                        <!-- Jenis Limbah (Read Only) -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Jenis Limbah
+                            </label>
+                            <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                <div class="font-medium text-gray-900 dark:text-gray-100">
+                                    {{ $laporanHarian->jenisLimbah->nama }}
+                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                    Kode: {{ $laporanHarian->jenisLimbah->kode_limbah }} | 
+                                    Satuan: {{ $laporanHarian->jenisLimbah->satuan_default }}
                                 </div>
                             </div>
-                        </x-form-group>
+                            <p class="mt-1 text-xs text-gray-500">Jenis limbah tidak dapat diubah setelah laporan dibuat</p>
+                        </div>
+
+                        <!-- Penyimpanan (Read Only) -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Penyimpanan
+                            </label>
+                            <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                <div class="font-medium text-gray-900 dark:text-gray-100">
+                                    {{ $laporanHarian->penyimpanan->nama_penyimpanan }}
+                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                    Lokasi: {{ $laporanHarian->penyimpanan->lokasi }}
+                                </div>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Penyimpanan tidak dapat diubah setelah laporan dibuat</p>
+                        </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            <x-form-group label="Jumlah" name="jumlah" required>
-                                <x-input type="number" name="jumlah" step="0.01" min="0.01" 
-                                         value="{{ old('jumlah', $laporanHarian->jumlah) }}" placeholder="0.00" required />
-                            </x-form-group>
+                            <!-- Jumlah -->
+                            <div class="mb-4">
+                                <label for="jumlah" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Jumlah <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" name="jumlah" id="jumlah" step="0.01" min="0.01" 
+                                       value="{{ old('jumlah', $laporanHarian->jumlah) }}" 
+                                       placeholder="0.00" required
+                                       class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400" />
+                                @error('jumlah')
+                                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
 
-                            <x-form-group label="Satuan" name="satuan_display">
-                                <x-input id="satuan_display" readonly 
-                                         value="{{ $laporanHarian->satuan }}" class="bg-gray-50" />
-                            </x-form-group>
+                            <!-- Satuan (Read Only) -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Satuan
+                                </label>
+                                <input type="text" value="{{ $laporanHarian->satuan }}" readonly 
+                                       class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
+                            </div>
                         </div>
                     </div>
 
                     <!-- Kolom Kanan -->
                     <div class="space-y-4">
-                        <x-form-group label="Keterangan" name="keterangan">
-                            <x-textarea name="keterangan" rows="4" 
-                                        placeholder="Catatan tambahan tentang laporan ini...">{{ old('keterangan', $laporanHarian->keterangan) }}</x-textarea>
-                        </x-form-group>
+                        <!-- Keterangan -->
+                        <div class="mb-4">
+                            <label for="keterangan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Keterangan
+                            </label>
+                            <textarea name="keterangan" id="keterangan" rows="6" 
+                                      placeholder="Catatan tambahan tentang laporan ini..."
+                                      class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400">{{ old('keterangan', $laporanHarian->keterangan) }}</textarea>
+                            @error('keterangan')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
 
                         <!-- Info Jenis Limbah -->
-                        <div id="jenis-limbah-info" class="p-4 bg-green-50 dark:bg-green-900 rounded-lg">
+                        <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg">
                             <h4 class="font-medium text-green-800 dark:text-green-200 mb-2">Informasi Jenis Limbah</h4>
-                            <div id="limbah-details" class="text-sm text-green-700 dark:text-green-300 space-y-1">
+                            <div class="text-sm text-green-700 dark:text-green-300 space-y-1">
                                 <div><strong>Kode:</strong> {{ $laporanHarian->jenisLimbah->kode_limbah }}</div>
-                                <div><strong>Kategori:</strong> {{ $laporanHarian->jenisLimbah->kategori }}</div>
+                                <div><strong>Kategori:</strong> {{ $laporanHarian->jenisLimbah->kategori_name }}</div>
                                 <div><strong>Satuan:</strong> {{ $laporanHarian->jenisLimbah->satuan_default }}</div>
                             </div>
                         </div>
 
-                        <!-- Peringatan Kapasitas -->
-                        <div id="kapasitas-warning" class="hidden p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
-                            <div class="flex">
-                                <svg class="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                </svg>
-                                <div>
-                                    <h4 class="font-medium text-yellow-800 dark:text-yellow-200">Peringatan Kapasitas</h4>
-                                    <p id="kapasitas-warning-text" class="text-sm text-yellow-700 dark:text-yellow-300 mt-1"></p>
-                                </div>
+                        <!-- Info Penyimpanan -->
+                        <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                            <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-2">Informasi Penyimpanan</h4>
+                            <div class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                                <div><strong>Nama:</strong> {{ $laporanHarian->penyimpanan->nama_penyimpanan }}</div>
+                                <div><strong>Lokasi:</strong> {{ $laporanHarian->penyimpanan->lokasi }}</div>
+                                <div><strong>Kapasitas Maksimal:</strong> {{ number_format($laporanHarian->penyimpanan->kapasitas_maksimal, 2) }} {{ $laporanHarian->penyimpanan->satuan }}</div>
+                                <div><strong>Sisa Kapasitas:</strong> {{ number_format($laporanHarian->penyimpanan->sisa_kapasitas, 2) }} {{ $laporanHarian->penyimpanan->satuan }}</div>
                             </div>
                         </div>
 
@@ -149,14 +172,16 @@
                     <x-button variant="secondary" href="{{ route('laporan-harian.index') }}">
                         Batal
                     </x-button>
-                    <x-button type="submit" name="status" value="draft">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a.997.997 0 01-1.414 0l-7-7A1.997 1.997 0 013 12V7a4 4 0 014-4z"></path>
-                        </svg>
-                        Simpan Perubahan
-                    </x-button>
+                    @if($laporanHarian->canEdit())
+                        <x-button type="submit">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Simpan Perubahan
+                        </x-button>
+                    @endif
                     @if($laporanHarian->canSubmit())
-                        <x-button type="submit" name="status" value="submitted" id="submit-btn">
+                        <x-button type="submit" name="status" value="submitted">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
@@ -165,7 +190,7 @@
                     @endif
                 </div>
             </form>
-                </x-card>
+        </x-card>
     </div>
 
     <!-- JavaScript -->

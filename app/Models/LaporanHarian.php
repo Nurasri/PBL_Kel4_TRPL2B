@@ -105,10 +105,19 @@ class LaporanHarian extends Model
         return $this->status === 'draft';
     }
 
+    public function isSubmitted()
+    {
+        return $this->status === 'submitted';
+    }
+
+    // Submit method
     public function submit()
     {
-        $this->status = 'submitted';
-        $this->save();
+        if (!$this->canSubmit()) {
+            throw new \Exception('Laporan tidak dapat disubmit.');
+        }
+
+        $this->update(['status' => 'submitted']);
         
         // Update kapasitas penyimpanan
         $this->penyimpanan->addLimbah($this->jumlah);

@@ -162,9 +162,14 @@ class JenisLimbah extends Model
         return $this->hasMany(LaporanHarian::class, 'jenis_limbah_id');
     }
 
-    public function penyimpanan()
+    public function penyimpanans()
     {
         return $this->hasMany(Penyimpanan::class, 'jenis_limbah_id');
+    }
+
+    public function pengelolaanLimbahs()
+    {
+        return $this->hasMany(PengelolaanLimbah::class);
     }
 
     // Helper methods

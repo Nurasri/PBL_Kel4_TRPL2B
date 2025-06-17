@@ -3,7 +3,7 @@
         Detail Perusahaan
     </x-slot:title>
     <div class="container max-w-2xl mx-auto py-8">
-        <h2 class="mb-6 text-2xl font-bold text-gray-800 dark:text-gray-100">Detail Perusahaan</h2>
+        <h2 class="mb-6 text-2xl font-bold text-gray-800 dark:text-gray-100">Profil Perusahaan</h2>
 
         @if(session('success'))
             <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-800"

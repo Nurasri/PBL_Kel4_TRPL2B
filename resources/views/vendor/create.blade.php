@@ -127,10 +127,9 @@
                         class="px-4 py-2 text-sm font-medium leading-5 text-gray-700 transition-colors duration-150 border border-gray-300 rounded-lg active:bg-gray-100 hover:bg-gray-100 focus:outline-none focus:shadow-outline-gray">
                         Batal
                     </a>
-                    <button type="submit"
-                        class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
+                    <x-button type="submit">
                         Simpan Vendor
-                    </button>
+                    </x-button>
                 </div>
             </form>
         </div>

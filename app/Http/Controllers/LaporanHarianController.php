@@ -91,86 +91,95 @@ class LaporanHarianController extends Controller
     public function create(): View
     {
         $user = Auth::user();
-        
+
         if (!$user->hasValidPerusahaan()) {
             return redirect()->route('perusahaan.create')
                 ->with('error', 'Silakan lengkapi profil perusahaan terlebih dahulu.');
         }
 
-        // Ambil jenis limbah aktif
-        $jenisLimbahs = JenisLimbah::where('status', 'active')
-            ->orderBy('nama')
-            ->get();
-
-        // Ambil penyimpanan milik perusahaan yang aktif
-        $penyimpanans = Penyimpanan::where('perusahaan_id', $user->perusahaan->id)
+        $jenisLimbahs = JenisLimbah::where('status', 'active')->get();
+    
+        // Debug: Check if there are penyimpanan records
+        $totalPenyimpanan = Penyimpanan::where('perusahaan_id', $user->perusahaan->id)
             ->where('status', 'aktif')
-            ->orderBy('nama_penyimpanan')
-            ->get();
+            ->count();
+    
+        \Log::info('Total penyimpanan for perusahaan ' . $user->perusahaan->id . ': ' . $totalPenyimpanan);
+    
+        // Debug: Check penyimpanan per jenis limbah
+        foreach ($jenisLimbahs as $jenis) {
+            $count = Penyimpanan::where('perusahaan_id', $user->perusahaan->id)
+                ->where('jenis_limbah_id', $jenis->id)
+                ->where('status', 'aktif')
+                ->count();
+            \Log::info('Jenis limbah ' . $jenis->nama . ' has ' . $count . ' penyimpanan');
+        }
 
-        return view('laporan-harian.create', compact('jenisLimbahs', 'penyimpanans'));
+        return view('laporan-harian.create', compact('jenisLimbahs'));
     }
-
     /**
      * Store a newly created laporan
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate(
-            LaporanHarian::validationRules(),
-            LaporanHarian::validationMessages()
-        );
+        $request->validate([
+            'tanggal' => 'required|date|before_or_equal:today',
+            'jenis_limbah_id' => 'required|exists:jenis_limbahs,id',
+            'penyimpanan_id' => 'required|exists:penyimpanans,id',
+            'jumlah' => 'required|numeric|min:0.01',
+            'keterangan' => 'nullable|string|max:1000',
+            'status' => 'required|in:draft,submitted'
+        ]);
 
         try {
             DB::beginTransaction();
 
-            // Validasi penyimpanan milik perusahaan
-            $penyimpanan = Penyimpanan::where('id', $request->penyimpanan_id)
-                ->where('perusahaan_id', auth()->user()->perusahaan->id)
+            $user = auth()->user();
+        
+            // Validasi penyimpanan milik perusahaan dan sesuai jenis limbah
+            $penyimpanan = Penyimpanan::with('jenisLimbah')
+                ->where('id', $request->penyimpanan_id)
+                ->where('perusahaan_id', $user->perusahaan->id)
+                ->where('jenis_limbah_id', $request->jenis_limbah_id)
                 ->first();
 
             if (!$penyimpanan) {
-                return back()->withErrors(['penyimpanan_id' => 'Penyimpanan tidak valid.'])->withInput();
+                return back()->withErrors(['penyimpanan_id' => 'Penyimpanan tidak valid atau tidak sesuai dengan jenis limbah.'])->withInput();
             }
 
-            // Validasi kapasitas jika langsung submit
-            if ($request->status === 'submitted') {
-                if (!$penyimpanan->canAccommodate($request->jumlah)) {
-                    return back()->withErrors([
-                        'jumlah' => 'Kapasitas penyimpanan tidak mencukupi. Sisa kapasitas: ' . 
-                               number_format($penyimpanan->sisa_kapasitas, 2) . ' ' . $penyimpanan->satuan
-                    ])->withInput();
-                }
+            // Validasi kapasitas
+            $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
+            if ($request->jumlah > $sisaKapasitas) {
+                return back()->withErrors([
+                    'jumlah' => 'Jumlah limbah melebihi sisa kapasitas penyimpanan. Sisa kapasitas: ' . 
+                               number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->jenisLimbah->satuan_default
+                ])->withInput();
             }
 
-            // Ambil satuan dari jenis limbah
-            $jenisLimbah = JenisLimbah::find($request->jenis_limbah_id);
-        
-            $laporan = new LaporanHarian([
-                'perusahaan_id' => auth()->user()->perusahaan->id,
+            // Buat laporan harian
+            $laporanHarian = new LaporanHarian([
+                'perusahaan_id' => $user->perusahaan->id,
                 'jenis_limbah_id' => $request->jenis_limbah_id,
                 'penyimpanan_id' => $request->penyimpanan_id,
                 'tanggal' => $request->tanggal,
                 'jumlah' => $request->jumlah,
-                'satuan' => $jenisLimbah->satuan_default,
-                'status' => $request->get('status', 'draft'),
-                'keterangan' => $request->keterangan
+                'satuan' => $penyimpanan->jenisLimbah->satuan_default, // Ambil dari jenis limbah
+                'keterangan' => $request->keterangan,
+                'status' => $request->status
             ]);
-            
-            $laporan->save();
 
-            // Update kapasitas jika submitted
+            $laporanHarian->save();
+
+            // Update kapasitas penyimpanan jika status submitted
             if ($request->status === 'submitted') {
-                $penyimpanan->addLimbah($request->jumlah);
+                $penyimpanan->kapasitas_terpakai += $request->jumlah;
+                $penyimpanan->save();
             }
 
             DB::commit();
 
-            $message = $laporan->isDraft() ? 
-                'Laporan berhasil disimpan sebagai draft.' : 
-                'Laporan berhasil disubmit dan kapasitas penyimpanan telah diperbarui.';
-
-            return redirect()->route('laporan-harian.index')->with('success', $message);
+            return redirect()->route('laporan-harian.index')
+                ->with('success', 'Laporan harian berhasil ' . ($request->status === 'draft' ? 'disimpan sebagai draft' : 'disubmit') . '.');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -356,38 +365,59 @@ class LaporanHarianController extends Controller
     }
 
         /**
-     * Get penyimpanan by jenis limbah (AJAX)
+     * API untuk mendapatkan penyimpanan berdasarkan jenis limbah
      */
     public function getPenyimpananByJenisLimbah(Request $request)
     {
         try {
             $jenisLimbahId = $request->get('jenis_limbah_id');
-            $perusahaanId = auth()->user()->perusahaan->id;
+            $user = auth()->user();
 
-            $penyimpanans = Penyimpanan::where('perusahaan_id', $perusahaanId)
+            if (!$user->perusahaan) {
+                return response()->json(['error' => 'Perusahaan tidak ditemukan'], 400);
+            }
+
+            $perusahaanId = $user->perusahaan->id;
+
+            // Menggunakan Eloquent dengan relationship
+            $penyimpanans = Penyimpanan::with('jenisLimbah')
+                ->where('perusahaan_id', $perusahaanId)
                 ->where('jenis_limbah_id', $jenisLimbahId)
                 ->where('status', 'aktif')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'id' => $item->id,
-                        'nama_penyimpanan' => $item->nama_penyimpanan,
-                        'lokasi' => $item->lokasi,
-                        'sisa_kapasitas' => $item->sisa_kapasitas,
-                        'satuan' => $item->satuan,
-                        'persentase_kapasitas' => $item->persentase_kapasitas,
-                        'status_kapasitas_text' => $item->status_kapasitas_text,
-                        'status_kapasitas_color' => $item->status_kapasitas_color,
-                    ];
-                });
+                ->get();
 
-            return response()->json($penyimpanans);
+            \Log::info('Found penyimpanans: ' . $penyimpanans->count());
+
+            // Transform data
+            $result = $penyimpanans->map(function ($penyimpanan) {
+                $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
+                $persentaseKapasitas = $penyimpanan->kapasitas_maksimal > 0 ? 
+                    ($penyimpanan->kapasitas_terpakai / $penyimpanan->kapasitas_maksimal * 100) : 0;
+                
+                return [
+                    'id' => $penyimpanan->id,
+                    'nama_penyimpanan' => $penyimpanan->nama_penyimpanan,
+                    'lokasi' => $penyimpanan->lokasi,
+                    'kapasitas_maksimal' => (float) $penyimpanan->kapasitas_maksimal,
+                    'kapasitas_terpakai' => (float) $penyimpanan->kapasitas_terpakai,
+                    'sisa_kapasitas' => (float) $sisaKapasitas,
+                    'satuan' => $penyimpanan->jenisLimbah->satuan_default, // Ambil dari jenis limbah
+                    'persentase_kapasitas' => round($persentaseKapasitas, 1),
+                    'can_accommodate' => $sisaKapasitas > 0
+                ];
+            });
+
+            return response()->json($result);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error in getPenyimpananByJenisLimbah: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+        
+            return response()->json([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
-
     /**
      * Get jenis limbah info (AJAX)
      */
@@ -536,7 +566,7 @@ class LaporanHarianController extends Controller
                     $item->satuan,
                     $item->status_name,
                     $item->keterangan,
-                    $item->tanggal_laporan->format('d/m/Y H:i')
+                    $item->create_at->format('d/m/Y H:i')
                 ]);
             }
 
