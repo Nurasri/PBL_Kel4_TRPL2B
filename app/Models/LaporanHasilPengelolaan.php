@@ -24,10 +24,7 @@ class LaporanHasilPengelolaan extends Model
         'dokumentasi',
         'nomor_sertifikat',
         'catatan_hasil',
-        'status_validasi',
-        'validated_by',
-        'validated_at',
-        'catatan_validasi'
+       
     ];
 
     protected $casts = [
@@ -37,7 +34,7 @@ class LaporanHasilPengelolaan extends Model
         'biaya_aktual' => 'decimal:2',
         'efisiensi_pengelolaan' => 'decimal:2',
         'dokumentasi' => 'array',
-        'validated_at' => 'datetime',
+        
     ];
 
     // Relationships
@@ -51,10 +48,7 @@ class LaporanHasilPengelolaan extends Model
         return $this->belongsTo(PengelolaanLimbah::class);
     }
 
-    public function validator()
-    {
-        return $this->belongsTo(User::class, 'validated_by');
-    }
+    
 
     // Accessors
     public function getStatusHasilNameAttribute()
@@ -62,10 +56,7 @@ class LaporanHasilPengelolaan extends Model
         return self::getStatusHasilOptions()[$this->status_hasil] ?? 'Unknown';
     }
 
-    public function getStatusValidasiNameAttribute()
-    {
-        return self::getStatusValidasiOptions()[$this->status_validasi] ?? 'Unknown';
-    }
+    
 
     public function getStatusBadgeClassAttribute()
     {
@@ -76,15 +67,7 @@ class LaporanHasilPengelolaan extends Model
         ][$this->status_hasil] ?? 'gray';
     }
 
-    public function getValidasiBadgeClassAttribute()
-    {
-        return [
-            'draft' => 'gray',
-            'submitted' => 'blue',
-            'approved' => 'green',
-            'rejected' => 'red'
-        ][$this->status_validasi] ?? 'gray';
-    }
+    
 
     // Methods
     public function isDraft()
@@ -94,7 +77,7 @@ class LaporanHasilPengelolaan extends Model
 
     public function canEdit()
     {
-        return in_array($this->status_validasi, ['draft', 'rejected']);
+        return true; // Perusahaan selalu bisa edit
     }
 
     public function canSubmit()
@@ -102,37 +85,7 @@ class LaporanHasilPengelolaan extends Model
         return $this->status_validasi === 'draft';
     }
 
-    public function canApprove()
-    {
-        return $this->status_validasi === 'submitted';
-    }
 
-    public function submit()
-    {
-        $this->update([
-            'status_validasi' => 'submitted'
-        ]);
-    }
-
-    public function approve($validatorId, $catatan = null)
-    {
-        $this->update([
-            'status_validasi' => 'approved',
-            'validated_by' => $validatorId,
-            'validated_at' => now(),
-            'catatan_validasi' => $catatan
-        ]);
-    }
-
-    public function reject($validatorId, $catatan)
-    {
-        $this->update([
-            'status_validasi' => 'rejected',
-            'validated_by' => $validatorId,
-            'validated_at' => now(),
-            'catatan_validasi' => $catatan
-        ]);
-    }
 
     public function calculateEfficiency()
     {
@@ -152,15 +105,7 @@ class LaporanHasilPengelolaan extends Model
         ];
     }
 
-    public static function getStatusValidasiOptions(): array
-    {
-        return [
-            'draft' => 'Draft',
-            'submitted' => 'Disubmit',
-            'approved' => 'Disetujui',
-            'rejected' => 'Ditolak'
-        ];
-    }
+   
 
     public static function getMetodeDisposalOptions(): array
     {
@@ -201,8 +146,13 @@ class LaporanHasilPengelolaan extends Model
             'status_hasil.required' => 'Status hasil wajib dipilih.',
             'jumlah_berhasil_dikelola.required' => 'Jumlah berhasil dikelola wajib diisi.',
             'jumlah_berhasil_dikelola.min' => 'Jumlah tidak boleh kurang dari 0.',
-            'dokumentasi.*.mimes' => 'File harus berformat PDF, JPG, JPEG, atau PNG.',
-            'dokumentasi.*.max' => 'Ukuran file maksimal 5MB.'
+            'biaya_aktual.numeric' => 'Biaya aktual harus berupa angka.',
+            'biaya_aktual.min' => 'Biaya aktual tidak boleh kurang dari 0.',
+            'dokumentasi.*.file' => 'Dokumentasi harus berupa file.',
+            'dokumentasi.*.mimes' => 'Dokumentasi harus berformat PDF, JPG, JPEG, atau PNG.',
+            'dokumentasi.*.max' => 'Ukuran file dokumentasi maksimal 5MB.',
+            'nomor_sertifikat.max' => 'Nomor sertifikat maksimal 100 karakter.',
+            'catatan_hasil.max' => 'Catatan hasil maksimal 2000 karakter.'
         ];
     }
 
@@ -216,19 +166,22 @@ class LaporanHasilPengelolaan extends Model
     {
         return $query->where('status_hasil', $status);
     }
+    // public function scopeByValidasi($query, $status)
+    // {
+    //     return $query->where('status_validasi', $status);
+    // }
 
-    public function scopeByValidasi($query, $validasi)
+    // Boot method untuk auto-calculate efficiency
+    protected static function boot()
     {
-        return $query->where('status_validasi', $validasi);
-    }
+        parent::boot();
 
-    public function scopeApproved($query)
-    {
-        return $query->where('status_validasi', 'approved');
+        static::saving(function ($model) {
+            // Auto-calculate efficiency if not set
+            if (is_null($model->efisiensi_pengelolaan)) {
+                $model->efisiensi_pengelolaan = $model->calculateEfficiency();
+            }
+        });
     }
-
-    public function scopePending($query)
-    {
-        return $query->where('status_validasi', 'submitted');
-    }
+    
 }

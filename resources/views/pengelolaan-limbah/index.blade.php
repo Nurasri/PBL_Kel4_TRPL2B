@@ -6,7 +6,7 @@
     <div class="container px-6 mx-auto grid">
         <div class="flex justify-between items-center">
             <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                Pengelolaan Limbah
+                Manajemen Pengelolaan Limbah
             </h2>
             <div class="flex space-x-2">
                 <x-button href="{{ route('pengelolaan-limbah.create') }}">

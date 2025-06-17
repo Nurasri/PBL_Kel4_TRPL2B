@@ -67,7 +67,7 @@ class Penyimpanan extends Model
     /**
      * Hitung persentase kapasitas terpakai
      */
-    public function getPersentaseKapasitasAttribute()
+    public function getPersentaseKapasitas()
     {
         if ($this->kapasitas_maksimal <= 0) {
             return 0;

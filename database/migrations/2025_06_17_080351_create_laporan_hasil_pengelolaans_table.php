@@ -30,18 +30,12 @@ return new class extends Migration
             $table->string('nomor_sertifikat')->nullable();
             $table->text('catatan_hasil')->nullable();
             
-            // Validasi & Approval
-            $table->enum('status_validasi', ['draft', 'submitted', 'approved', 'rejected'])->default('draft');
-            $table->foreignId('validated_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->timestamp('validated_at')->nullable();
-            $table->text('catatan_validasi')->nullable();
             
             $table->timestamps();
             
             // Indexes
             $table->index(['perusahaan_id', 'status_hasil']);
             $table->index(['tanggal_selesai']);
-            $table->index(['status_validasi']);
             $table->unique(['pengelolaan_limbah_id']); // Satu laporan per pengelolaan
         });
     }

@@ -54,6 +54,11 @@ class PengelolaanLimbah extends Model
         return $this->belongsTo(Vendor::class);
     }
 
+    public function laporanHarian()
+    {
+        return $this->belongsTo(LaporanHarian::class);
+    }
+
     public function laporanHasil()
     {
         return $this->hasOne(LaporanHasilPengelolaan::class);
@@ -94,6 +99,12 @@ class PengelolaanLimbah extends Model
     {
         return self::getMetodePengelolaanOptions()[$this->metode_pengelolaan] ?? 'Unknown';
     }
+
+    // // Alias untuk tanggal_mulai (untuk kompatibilitas dengan dashboard)
+    // public function getTanggalMulaiAttribute()
+    // {
+    //     return $this->tanggal_mulai;
+    // }
 
     // Methods
     public function canEdit()
