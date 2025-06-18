@@ -4,17 +4,26 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\ArtikelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PerusahaanController;
 use App\Http\Controllers\JenisLimbahController;
-use App\Http\Controllers\KategoriArtikelController;
 use App\Http\Controllers\PenyimpananController;
 use App\Http\Controllers\LaporanHarianController;
+use App\Http\Controllers\KategoriArtikelController;
 use App\Http\Controllers\PengelolaanLimbahController;
 use App\Http\Controllers\LaporanHasilPengelolaanController;
+use App\Http\Controllers\Frontend\ArtikelController as FrontendArtikelController;
 
 Route::get('/', function () {
     return view('frontend.welcome');
+});
+// Frontend routes (public access)
+Route::prefix('artikel')->name('frontend.artikel.')->group(function () {
+    Route::get('/', [FrontendArtikelController::class, 'index'])->name('index');
+    Route::get('/search', [FrontendArtikelController::class, 'search'])->name('search');
+    Route::get('/kategori/{slug}', [FrontendArtikelController::class, 'byKategori'])->name('kategori');
+    Route::get('/{slug}', [FrontendArtikelController::class, 'show'])->name('show');
 });
 
 // Authentication routes
@@ -60,6 +69,13 @@ Route::middleware('auth')->group(function () {
         Route::delete('/vendor/{vendor}', [VendorController::class, 'destroy'])->name('vendor.destroy');
         Route::put('/vendor/{vendor}/toggle-status', [VendorController::class, 'toggleStatus'])->name('vendor.toggle-status');
 
+        // Kategori artikel
+        Route::resource('kategori-artikel', KategoriArtikelController::class);
+        Route::post('/kategori-artikel/update-urutan', [KategoriArtikelController::class, 'updateUrutan'])->name('kategori-artikel.update-urutan');
+
+        // Backend Artikel (Admin)
+        Route::resource('artikel', ArtikelController::class);
+        Route::post('/artikel/bulk-action', [ArtikelController::class, 'bulkAction'])->name('artikel.bulk-action');
        
     });
      // Kategori artikel

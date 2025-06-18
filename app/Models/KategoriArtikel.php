@@ -56,10 +56,15 @@ class KategoriArtikel extends Model
     }
 
     // Relationships
-    // public function artikels()
-    // {
-    //     return $this->hasMany(Artikel::class);
-    // }
+    public function artikels()
+    {
+        return $this->hasMany(Artikel::class);
+    }
+
+    public function publishedArtikels()
+    {
+        return $this->hasMany(Artikel::class)->published();
+    }
 
     // Accessors
     public function getStatusNameAttribute()
