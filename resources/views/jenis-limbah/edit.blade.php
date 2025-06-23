@@ -35,12 +35,12 @@
 
         @if(session('error'))
             <x-alert type="error" class="mb-6">{{ session('error') }}</x-alert>
-        @endif
+    @endif
 
         <x-card>
             <form method="POST" action="{{ route('jenis-limbah.update', $jenisLimbah) }}" class="space-y-6">
-                @csrf
-                @method('PUT')
+        @csrf
+        @method('PUT')
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Nama Jenis Limbah -->
@@ -181,7 +181,7 @@
                             <p class="form-error">{{ $message }}</p>
                         @enderror
                     </div>
-                </div>
+        </div>
 
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -343,5 +343,5 @@
                 </div>
             </div>
         </x-card>
-    </div>
+</div>
 </x-app>

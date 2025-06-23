@@ -62,6 +62,18 @@ class LaporanHarian extends Model
         return $query->where('status', $status);
     }
 
+    // Tambahkan scope untuk dashboard
+    public function scopeThisMonth($query)
+    {
+        return $query->whereMonth('tanggal', now()->month)
+                     ->whereYear('tanggal', now()->year);
+    }
+
+    public function scopeLastMonths($query, $months = 6)
+    {
+        return $query->where('tanggal', '>=', now()->subMonths($months));
+    }
+
     // Accessors
     public function getTanggalLaporanAttribute()
     {

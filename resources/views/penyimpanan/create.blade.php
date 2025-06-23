@@ -3,30 +3,7 @@
         Tambah Penyimpanan Limbah
     </x-slot:title>
     
-    <!-- DEBUG: Tambahkan info debug -->
-    @if(config('app.debug'))
-        <div class="mb-4 p-4 bg-yellow-100 rounded border">
-            <h4 class="font-bold">Debug Info:</h4>
-            <p><strong>User ID:</strong> {{ Auth::user()->id }}</p>
-            <p><strong>User Name:</strong> {{ Auth::user()->name }}</p>
-            <p><strong>User Role:</strong> {{ Auth::user()->role }}</p>
-            <p><strong>Has Perusahaan:</strong> {{ Auth::user()->perusahaan ? 'Yes' : 'No' }}</p>
-            @if(Auth::user()->perusahaan)
-                <p><strong>Perusahaan ID:</strong> {{ Auth::user()->perusahaan->id }}</p>
-                <p><strong>Perusahaan Name:</strong> {{ Auth::user()->perusahaan->nama_perusahaan }}</p>
-            @endif
-            
-            <!-- TAMBAH: Debug jenis limbah -->
-            <hr class="my-2">
-            <p><strong>Jenis Limbah Variable Exists:</strong> {{ isset($jenisLimbahs) ? 'Yes' : 'No' }}</p>
-            @if(isset($jenisLimbahs))
-                <p><strong>Jenis Limbah Count:</strong> {{ $jenisLimbahs->count() }}</p>
-                @if($jenisLimbahs->count() > 0)
-                    <p><strong>First Jenis Limbah:</strong> {{ $jenisLimbahs->first()->nama ?? 'No name' }}</p>
-                @endif
-            @endif
-        </div>
-    @endif
+    
     
     <div class="container px-6 mx-auto grid">
         <div class="flex justify-between items-center">

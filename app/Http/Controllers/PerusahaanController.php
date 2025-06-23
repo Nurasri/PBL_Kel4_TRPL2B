@@ -178,10 +178,42 @@ class PerusahaanController extends Controller
         return $alerts;
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $perusahaan = Perusahaan::with('user')->latest()->paginate(10);
-        return view('perusahaan.index', compact('perusahaan'));
+        $query = Perusahaan::with('user');
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_perusahaan', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('telepon', 'like', "%{$search}%")
+                  ->orWhere('no_registrasi', 'like', "%{$search}%")
+                  ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by jenis usaha
+        if ($request->filled('jenis_usaha')) {
+            $query->where('jenis_usaha', $request->jenis_usaha);
+        }
+
+        $perusahaans = $query->latest()->paginate(10)->withQueryString();
+
+        // Data untuk filter
+        $jenisUsahaOptions = [
+            'manufaktur' => 'Manufaktur',
+            'jasa' => 'Jasa',
+            'dagang' => 'Dagang',
+            'pertanian' => 'Pertanian',
+            'pertambangan' => 'Pertambangan',
+            'konstruksi' => 'Konstruksi',
+            'teknologi' => 'Teknologi',
+            'lainnya' => 'Lainnya'
+        ];
+
+        return view('perusahaan.index', compact('perusahaans', 'jenisUsahaOptions'));
     }
 
     public function show(Perusahaan $perusahaan): View
@@ -294,8 +326,8 @@ class PerusahaanController extends Controller
 
     public function adminIndex(): View
     {
-        $perusahaan = Perusahaan::with('user')->latest()->paginate(10);
-        return view('perusahaan.index', compact('perusahaan'));
+        $perusahaans = Perusahaan::with('user')->latest()->paginate(10);
+        return view('perusahaan.index', compact('perusahaans'));
     }
 
     public function adminShow(Perusahaan $perusahaan): View

@@ -13,9 +13,8 @@ use App\Http\Controllers\LaporanHarianController;
 use App\Http\Controllers\KategoriArtikelController;
 use App\Http\Controllers\PengelolaanLimbahController;
 use App\Http\Controllers\LaporanHasilPengelolaanController;
-use App\Http\Controllers\Frontend\ArtikelController as FrontendArtikelController;
 
-Route::get('/', function () {
+    Route::get('/', function () {
     return view('frontend.welcome');
 });
 // Frontend routes (public access)
@@ -27,9 +26,9 @@ Route::prefix('artikel')->name('frontend.artikel.')->group(function () {
 });
 
 // Authentication routes
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
 
-// Routes yang memerlukan authentication
+// Routes yang memerlukan autentikasi
 Route::middleware('auth')->group(function () {
     // Profile routes (untuk semua user yang sudah login)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -45,6 +44,13 @@ Route::middleware('auth')->group(function () {
         }
         return redirect()->route('profile.edit');
     })->name('dashboard');
+
+    // Routes untuk membuat perusahaan (accessible by authenticated users)
+    Route::get('/perusahaan/create', [PerusahaanController::class, 'create'])->name('perusahaan.create');
+    Route::post('/perusahaan', [PerusahaanController::class, 'store'])->name('perusahaan.store');
+
+    // Perusahaan index route (accessible by all authenticated users)
+    Route::get('/perusahaan', [PerusahaanController::class, 'index'])->name('perusahaan.index');
 
     // Admin routes
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
@@ -76,10 +82,9 @@ Route::middleware('auth')->group(function () {
         // Backend Artikel (Admin)
         Route::resource('artikel', ArtikelController::class);
         Route::post('/artikel/bulk-action', [ArtikelController::class, 'bulkAction'])->name('artikel.bulk-action');
-       
     });
-     // Kategori artikel
-        Route::resource('kategori-artikel', KategoriArtikelController::class);
+    // Kategori artikel
+    Route::resource('kategori-artikel', KategoriArtikelController::class);
 
     // Perusahaan routes
     Route::middleware('perusahaan')->group(function () {
@@ -91,13 +96,13 @@ Route::middleware('auth')->group(function () {
         Route::put('/perusahaan/{perusahaan}', [PerusahaanController::class, 'update'])->name('perusahaan.update');
 
         // Laporan Harian
-        Route::resource('laporan-harian', LaporanHarianController::class);
-        Route::post('/laporan-harian/{laporanHarian}/submit', [LaporanHarianController::class, 'submit'])
-            ->name('laporan-harian.submit');
-        Route::get('/laporan-harian/export/csv', [LaporanHarianController::class, 'export'])
-            ->name('laporan-harian.export');
-        Route::post('/laporan-harian/bulk-action', [LaporanHarianController::class, 'bulkAction'])
-            ->name('laporan-harian.bulk-action');
+        Route::get('/laporan-harian/create', [LaporanHarianController::class, 'create'])->name('laporan-harian.create');
+        Route::post('/laporan-harian', [LaporanHarianController::class, 'store'])->name('laporan-harian.store');
+        Route::get('/laporan-harian/{laporanHarian}/edit', [LaporanHarianController::class, 'edit'])->name('laporan-harian.edit');
+        Route::put('/laporan-harian/{laporanHarian}', [LaporanHarianController::class, 'update'])->name('laporan-harian.update');
+        Route::delete('/laporan-harian/{laporanHarian}', [LaporanHarianController::class, 'destroy'])->name('laporan-harian.destroy');
+        Route::post('/laporan-harian/{laporanHarian}/submit', [LaporanHarianController::class, 'submit'])->name('laporan-harian.submit');
+        Route::post('/laporan-harian/bulk-action', [LaporanHarianController::class, 'bulkAction'])->name('laporan-harian.bulk-action');
 
         // pengelolaan limbah
         Route::resource('pengelolaan-limbah', PengelolaanLimbahController::class);
@@ -174,6 +179,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/jenis-limbah', [JenisLimbahController::class, 'apiIndex'])->name('jenis-limbah.index');
         Route::get('/jenis-limbah/{jenisLimbah}', [JenisLimbahController::class, 'apiShow'])->name('jenis-limbah.show');
     });
+
+    Route::get('/laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');
+    Route::get('/laporan-harian/{laporanHarian}', [LaporanHarianController::class, 'show'])->name('laporan-harian.show');
+    Route::get('/laporan-harian/export/csv', [LaporanHarianController::class, 'export'])->name('laporan-harian.export');
+
 
 
     // Perusahaan index route (accessible by all authenticated users)

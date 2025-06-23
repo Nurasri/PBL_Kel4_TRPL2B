@@ -89,7 +89,6 @@
                     <input type="file" name="logo"
                         class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
                         accept="image/*" />
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PNG, JPG atau JPEG (
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PNG, JPG atau JPEG (Maks. 2MB). Kosongkan
                         jika tidak ingin mengubah logo.</p>
                     @error('logo')
@@ -108,6 +107,6 @@
                     </button>
                 </div>
             </form>
-        </div>z
+        </div>
     </div>
 </x-app>

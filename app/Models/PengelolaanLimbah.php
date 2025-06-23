@@ -125,6 +125,18 @@ class PengelolaanLimbah extends Model
         ]);
     }
 
+    // Tambahkan scope untuk dashboard
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['diproses', 'dalam_pengangkutan']);
+    }
+
+    public function scopeOverdue($query, $days = 30)
+    {
+        return $query->where('status', '!=', 'selesai')
+                 ->where('tanggal_mulai', '<', now()->subDays($days));
+    }
+
     // Static methods
     public static function getJenisPengelolaanOptions(): array
     {

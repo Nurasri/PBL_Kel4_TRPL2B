@@ -84,7 +84,56 @@ class JenisLimbahController extends Controller
             abort(404);
         }
 
-        return view('jenis-limbah.show', compact('jenisLimbah'));
+        // Load relationships dengan count
+        $jenisLimbah->loadCount([
+            'laporanHarian',
+            'pengelolaanLimbah',
+            'penyimpanan'
+        ]);
+
+        // Load recent activities
+        $recentLaporan = $jenisLimbah->laporanHarian()
+            ->with(['perusahaan', 'penyimpanan'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentPengelolaan = $jenisLimbah->pengelolaanLimbah()
+            ->with(['perusahaan', 'vendor'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $activePenyimpanan = $jenisLimbah->penyimpanan()
+            ->with('perusahaan')
+            ->where('status', 'aktif')
+            ->get();
+
+        // Statistics
+        $totalVolume = $jenisLimbah->laporanHarian()
+            ->where('status', 'submitted')
+            ->sum('jumlah');
+
+        $totalPengelolaanVolume = $jenisLimbah->pengelolaanLimbah()
+            ->sum('jumlah_dikelola');
+
+        $avgEfisiensi = $jenisLimbah->pengelolaanLimbah()
+            ->whereHas('laporanHasilPengelolaan')
+            ->with('laporanHasilPengelolaan')
+            ->get()
+            ->pluck('laporanHasilPengelolaan.efisiensi_pengelolaan')
+            ->flatten()
+            ->avg();
+
+        return view('jenis-limbah.show', compact(
+            'jenisLimbah',
+            'recentLaporan',
+            'recentPengelolaan',
+            'activePenyimpanan',
+            'totalVolume',
+            'totalPengelolaanVolume',
+            'avgEfisiensi'
+        ));
     }
 
     public function edit(JenisLimbah $jenisLimbah)
