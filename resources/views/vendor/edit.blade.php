@@ -10,7 +10,7 @@
             </h2>
             <div class="flex space-x-2">
                 <a href="{{ route('vendor.show', $vendor) }}"
-                    class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue">
+                    class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-green">
                     Detail
                 </a>
                 <a href="{{ route('vendor.index') }}"
@@ -31,7 +31,7 @@
         @endif
 
         <div class="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
-            <form method="POST" action="{{ route('vendor.update', $vendor) }}">
+            <form method="POST" action="{{ route('admin.vendor.update', $vendor) }}">
                 @csrf
                 @method('PUT')
 
@@ -142,10 +142,9 @@
                         class="px-4 py-2 text-sm font-medium leading-5 text-gray-700 transition-colors duration-150 border border-gray-300 rounded-lg active:bg-gray-100 hover:bg-gray-100 focus:outline-none focus:shadow-outline-gray">
                         Batal
                     </a>
-                    <button type="submit"
-                        class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
+                    <x-button type="submit">
                         Perbarui Vendor
-                    </button>
+                    </x-button>
                 </div>
             </form>
         </div>

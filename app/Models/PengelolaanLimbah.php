@@ -11,12 +11,13 @@ class PengelolaanLimbah extends Model
 
     protected $fillable = [
         'perusahaan_id',
-        'laporan_harian_id',
+        'jenis_limbah_id',
         'penyimpanan_id',
         'vendor_id',
         'jumlah_dikelola',
         'satuan',
-        'jenis_pengelolaan',
+        'jenis_pengelolaan',    // Siapa yang mengelola
+        'metode_pengelolaan',   // Bagaimana cara mengelola
         'status',
         'tanggal_mulai',
         'tanggal_selesai',
@@ -38,9 +39,9 @@ class PengelolaanLimbah extends Model
         return $this->belongsTo(Perusahaan::class);
     }
 
-    public function laporanHarian()
+    public function jenisLimbah()
     {
-        return $this->belongsTo(LaporanHarian::class);
+        return $this->belongsTo(JenisLimbah::class);
     }
 
     public function penyimpanan()
@@ -51,6 +52,26 @@ class PengelolaanLimbah extends Model
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
+    }
+
+    public function laporanHarian()
+    {
+        return $this->belongsTo(LaporanHarian::class);
+    }
+
+    public function laporanHasil()
+    {
+        return $this->hasOne(LaporanHasilPengelolaan::class);
+    }
+
+    public function hasLaporanHasil()
+    {
+        return $this->laporanHasil()->exists();
+    }
+
+    public function canCreateLaporanHasil()
+    {
+        return $this->status === 'selesai' && !$this->hasLaporanHasil();
     }
 
     // Accessors
@@ -74,10 +95,21 @@ class PengelolaanLimbah extends Model
         return self::getJenisPengelolaanOptions()[$this->jenis_pengelolaan] ?? 'Unknown';
     }
 
+    public function getMetodePengelolaanNameAttribute()
+    {
+        return self::getMetodePengelolaanOptions()[$this->metode_pengelolaan] ?? 'Unknown';
+    }
+
+    // // Alias untuk tanggal_mulai (untuk kompatibilitas dengan dashboard)
+    // public function getTanggalMulaiAttribute()
+    // {
+    //     return $this->tanggal_mulai;
+    // }
+
     // Methods
     public function canEdit()
     {
-        return in_array($this->status, ['diproses']);
+        return in_array($this->status, ['diproses', 'dalam_pengangkutan']);
     }
 
     public function canCancel()
@@ -93,14 +125,40 @@ class PengelolaanLimbah extends Model
         ]);
     }
 
+    // Tambahkan scope untuk dashboard
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['diproses', 'dalam_pengangkutan']);
+    }
+
+    public function scopeOverdue($query, $days = 30)
+    {
+        return $query->where('status', '!=', 'selesai')
+                 ->where('tanggal_mulai', '<', now()->subDays($days));
+    }
+
     // Static methods
     public static function getJenisPengelolaanOptions(): array
     {
         return [
             'internal' => 'Pengelolaan Internal',
             'vendor_eksternal' => 'Vendor Eksternal',
-            'disposal' => 'Disposal/Pemusnahan',
-            'recycling' => 'Daur Ulang'
+        ];
+    }
+
+    public static function getMetodePengelolaanOptions(): array
+    {
+        return [
+            'reduce' => 'Reduce (Pengurangan)',
+            'reuse' => 'Reuse (Penggunaan Kembali)',
+            'recycle' => 'Recycle (Daur Ulang)',
+            'recovery' => 'Recovery (Pemulihan)',
+            'treatment' => 'Treatment (Pengolahan)',
+            'disposal' => 'Disposal (Pembuangan)',
+            'incineration' => 'Incineration (Pembakaran)',
+            'landfill' => 'Landfill (Penimbunan)',
+            'composting' => 'Composting (Pengomposan)',
+            'stabilization' => 'Stabilization (Stabilisasi)',
         ];
     }
 
@@ -117,11 +175,12 @@ class PengelolaanLimbah extends Model
     public static function validationRules($id = null): array
     {
         return [
-            'laporan_harian_id' => 'required|exists:laporan_harians,id',
+            'jenis_limbah_id' => 'required|exists:jenis_limbahs,id',
             'penyimpanan_id' => 'required|exists:penyimpanans,id',
             'vendor_id' => 'nullable|exists:vendors,id',
             'jumlah_dikelola' => 'required|numeric|min:0.01',
             'jenis_pengelolaan' => 'required|in:' . implode(',', array_keys(self::getJenisPengelolaanOptions())),
+            'metode_pengelolaan' => 'required|in:' . implode(',', array_keys(self::getMetodePengelolaanOptions())),
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
             'biaya' => 'nullable|numeric|min:0',
@@ -133,11 +192,12 @@ class PengelolaanLimbah extends Model
     public static function validationMessages(): array
     {
         return [
-            'laporan_harian_id.required' => 'Laporan harian wajib dipilih.',
+            'jenis_limbah_id.required' => 'Jenis limbah wajib dipilih.',
             'penyimpanan_id.required' => 'Penyimpanan wajib dipilih.',
             'jumlah_dikelola.required' => 'Jumlah yang dikelola wajib diisi.',
             'jumlah_dikelola.min' => 'Jumlah minimal 0.01.',
             'jenis_pengelolaan.required' => 'Jenis pengelolaan wajib dipilih.',
+            'metode_pengelolaan.required' => 'Metode pengelolaan wajib dipilih.',
             'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai harus setelah atau sama dengan tanggal mulai.'
         ];

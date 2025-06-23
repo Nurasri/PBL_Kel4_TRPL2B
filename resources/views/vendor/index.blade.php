@@ -10,7 +10,7 @@
             </h2>
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.vendor.create') }}"
-                    class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
+                    class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-green">
                     Tambah Vendor
                 </a>
             @endif
@@ -37,7 +37,7 @@
                     <label class="block text-sm">
                         <span class="text-gray-700 dark:text-gray-400">Cari Vendor</span>
                         <input type="text" name="search" value="{{ request('search') }}"
-                            class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
+                            class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
                             placeholder="Nama perusahaan, PIC, email..." />
                     </label>
                 </div>
@@ -47,7 +47,7 @@
                     <label class="block text-sm">
                         <span class="text-gray-700 dark:text-gray-400">Jenis Layanan</span>
                         <select name="jenis_layanan"
-                            class="block w-full mt-1 text-sm dark:text-gray-300 dark:border-gray-600 dark:bg-gray-700 form-select focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:focus:shadow-outline-gray">
+                            class="block w-full mt-1 text-sm dark:text-gray-300 dark:border-gray-600 dark:bg-gray-700 form-select focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:focus:shadow-outline-gray">
                             <option value="">Semua Layanan</option>
                             @foreach(\App\Models\Vendor::getJenisLayananOptions() as $key => $label)
                                 <option value="{{ $key }}" {{ request('jenis_layanan') == $key ? 'selected' : '' }}>
@@ -63,7 +63,7 @@
                     <label class="block text-sm">
                         <span class="text-gray-700 dark:text-gray-400">Status</span>
                         <select name="status"
-                            class="block w-full mt-1 text-sm dark:text-gray-300 dark:border-gray-600 dark:bg-gray-700 form-select focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:focus:shadow-outline-gray">
+                            class="block w-full mt-1 text-sm dark:text-gray-300 dark:border-gray-600 dark:bg-gray-700 form-select focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:focus:shadow-outline-gray">
                             <option value="">Semua Status</option>
                             <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
                             <option value="tidak_aktif" {{ request('status') == 'tidak_aktif' ? 'selected' : '' }}>Tidak
@@ -75,7 +75,7 @@
                 <!-- Tombol Filter -->
                 <div class="flex items-end space-x-2">
                     <button type="submit"
-                        class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
+                        class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-green">
                         Filter
                     </button>
                     <a href="{{ route('vendor.index') }}"
@@ -115,12 +115,12 @@
                                         {{ $vendor->nama_pic }}
                                     </td>
                                     <td class="px-4 py-3 text-sm">
-                                        <a href="mailto:{{ $vendor->email }}" class="text-purple-600 hover:text-purple-800">
+                                        <a href="mailto:{{ $vendor->email }}" class="text-green-600 hover:text-green-800">
                                             {{ $vendor->email }}
                                         </a>
                                     </td>
                                     <td class="px-4 py-3 text-sm">
-                                        <a href="tel:{{ $vendor->telepon }}" class="text-purple-600 hover:text-purple-800">
+                                        <a href="tel:{{ $vendor->telepon }}" class="text-green-600 hover:text-green-800">
                                             {{ $vendor->telepon }}
                                         </a>
                                     </td>
@@ -140,7 +140,7 @@
                                         <div class="flex items-center space-x-4 text-sm">
                                             <!-- Detail -->
                                             <a href="{{ route('vendor.show', $vendor->id) }}"
-                                                class="flex items-center justify-between px-2 py-2 text-sm font-medium leading-5 text-purple-600 rounded-lg dark:text-gray-400 focus:outline-none focus:shadow-outline-purple">
+                                                class="flex items-center justify-between px-2 py-2 text-sm font-medium leading-5 text-green-600 rounded-lg dark:text-gray-400 focus:outline-none focus:shadow-outline-green">
                                                 <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
                                                     <path fill-rule="evenodd"
@@ -152,7 +152,7 @@
                                             @if(auth()->user()->isAdmin())
                                                 <!-- Edit -->
                                                 <a href="{{ route('admin.vendor.edit', $vendor->id) }}"
-                                                    class="flex items-center justify-between px-2 py-2 text-sm font-medium leading-5 text-purple-600 rounded-lg dark:text-gray-400 focus:outline-none focus:shadow-outline-purple">
+                                                    class="flex items-center justify-between px-2 py-2 text-sm font-medium leading-5 text-green-600 rounded-lg dark:text-gray-400 focus:outline-none focus:shadow-outline-green">
                                                     <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
                                                         <path
                                                             d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z">
@@ -194,7 +194,7 @@
                             <p class="text-lg font-medium">Belum ada data vendor</p>
                             <p class="text-sm">
                                 @if(auth()->user()->isAdmin())
-                                    <a href="{{ route('admin.vendor.create') }}" class="text-purple-600 hover:text-purple-800">
+                                    <a href="{{ route('admin.vendor.create') }}" class="text-green-600 hover:text-green-800">
                                         Tambah vendor pertama
                                     </a>
                                 @else

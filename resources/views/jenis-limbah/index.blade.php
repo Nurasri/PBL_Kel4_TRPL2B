@@ -3,7 +3,7 @@
         @if(auth()->user()->isAdmin())
             Manajemen Jenis Limbah
         @else
-            Referensi Jenis Limbah
+            Daftar Jenis Limbah
         @endif
     </x-slot:title>
 
@@ -13,7 +13,7 @@
                 @if(auth()->user()->isAdmin())
                     Manajemen Jenis Limbah
                 @else
-                    Referensi Jenis Limbah
+                    Daftar Jenis Limbah
                 @endif
             </h2>
             @if(auth()->user()->isAdmin())

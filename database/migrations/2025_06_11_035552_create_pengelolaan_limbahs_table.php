@@ -11,17 +11,24 @@ return new class extends Migration
         Schema::create('pengelolaan_limbahs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('perusahaan_id')->constrained('perusahaans')->onDelete('cascade');
-            $table->foreignId('laporan_harian_id')->constrained('laporan_harians')->onDelete('cascade');
+            $table->foreignId('jenis_limbah_id')->constrained('jenis_limbahs')->onDelete('cascade');
             $table->foreignId('penyimpanan_id')->constrained('penyimpanans')->onDelete('cascade');
+            $table->date('tanggal_sampai')->nullable();
             $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('set null');
             
+            $table->date('tanggal_mulai');
             $table->decimal('jumlah_dikelola', 10, 2);
             $table->string('satuan', 20);
-            $table->enum('jenis_pengelolaan', ['internal', 'vendor_eksternal', 'disposal', 'recycling']);
-            $table->enum('status', ['diproses', 'dalam_pengangkutan', 'selesai', 'dibatalkan'])->default('diproses');
             
-            $table->date('tanggal_mulai');
-            $table->date('tanggal_selesai')->nullable();
+            // Jenis pengelolaan: internal, vendor_eksternal, disposal, recycling
+            $table->enum('jenis_pengelolaan', ['internal', 'vendor_eksternal', 'disposal', 'recycling']);
+            
+            // Metode pengelolaan: daur_ulang, pengolahan_internal, vendor_eksternal, disposal, treatment
+            $table->enum('metode_pengelolaan', ['daur_ulang', 'pengolahan_internal', 'vendor_eksternal', 'disposal', 'treatment']);
+            
+            // Status: draft, dalam_proses, selesai, dibatalkan
+            $table->enum('status', ['draft', 'dalam_proses', 'selesai', 'dibatalkan'])->default('draft');
+            
             $table->decimal('biaya', 12, 2)->nullable();
             $table->string('nomor_manifest')->nullable();
             $table->text('catatan')->nullable();
@@ -32,6 +39,7 @@ return new class extends Migration
             $table->index(['perusahaan_id', 'status']);
             $table->index(['tanggal_mulai']);
             $table->index(['jenis_pengelolaan']);
+            $table->index(['jenis_limbah_id']);
         });
     }
 

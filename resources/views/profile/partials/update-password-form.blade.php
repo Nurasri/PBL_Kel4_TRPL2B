@@ -5,7 +5,7 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Ensure your account is using a long, random password to stay secure.
+            Gunakan password yang kuat untuk melindungi akun Anda.
         </p>
     </header>
 
@@ -14,7 +14,7 @@
         @method('put')
 
         <label class="block text-sm">
-            <span class="text-gray-700 dark:text-gray-400">Current Password</span>
+            <span class="text-gray-700 dark:text-gray-400">Password saat ini</span>
             <input type="password" name="current_password"
                 class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
                 autocomplete="current-password" />
@@ -24,7 +24,7 @@
         </label>
 
         <label class="block text-sm">
-            <span class="text-gray-700 dark:text-gray-400">New Password</span>
+            <span class="text-gray-700 dark:text-gray-400">Password baru</span>
             <input type="password" name="password"
                 class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
                 autocomplete="new-password" />
@@ -34,7 +34,7 @@
         </label>
 
         <label class="block text-sm">
-            <span class="text-gray-700 dark:text-gray-400">Confirm Password</span>
+            <span class="text-gray-700 dark:text-gray-400">Konfirmasi Password</span>
             <input type="password" name="password_confirmation"
                 class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-green-400 focus:outline-none focus:shadow-outline-green dark:text-gray-300 dark:focus:shadow-outline-green form-input"
                 autocomplete="new-password" />

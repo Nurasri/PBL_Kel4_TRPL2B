@@ -45,7 +45,7 @@ class Penyimpanan extends Model
      */
     public function jenisLimbah(): BelongsTo
     {
-        return $this->belongsTo(JenisLimbah::class,'jenis_limbah_id');
+        return $this->belongsTo(JenisLimbah::class);
     }
 
     /**
@@ -57,67 +57,59 @@ class Penyimpanan extends Model
     }
 
     /**
-     * Hitung persentase kapasitas terpakai
-     */
-    public function getPersentaseKapasitasAttribute(): float
-    {
-        if ($this->kapasitas_maksimal <= 0) {
-            return 0;
-        }
-        
-        return round(($this->kapasitas_terpakai / $this->kapasitas_maksimal) * 100, 2);
-    }
-
-    /**
      * Hitung sisa kapasitas
      */
-    public function getSisaKapasitasAttribute(): float
+    public function getSisaKapasitasAttribute()
     {
         return $this->kapasitas_maksimal - $this->kapasitas_terpakai;
     }
 
     /**
-     * Status kapasitas (aman, peringatan, penuh)
+     * Hitung persentase kapasitas terpakai
      */
-    public function getStatusKapasitasAttribute(): string
+    public function getPersentaseKapasitas()
+    {
+        if ($this->kapasitas_maksimal <= 0) {
+            return 0;
+        }
+        return ($this->kapasitas_terpakai / $this->kapasitas_maksimal) * 100;
+    }
+
+    /**
+     * Text untuk status kapasitas
+     */
+    public function getStatusKapasitasTextAttribute()
     {
         $persentase = $this->persentase_kapasitas;
         
         if ($persentase >= 90) {
-            return 'penuh';
-        } elseif ($persentase >= 75) {
-            return 'peringatan';
+            return 'Hampir Penuh';
+        } elseif ($persentase >= 70) {
+            return 'Kapasitas Tinggi';
+        } elseif ($persentase >= 50) {
+            return 'Setengah Penuh';
         } else {
-            return 'aman';
+            return 'Kapasitas Tersedia';
         }
     }
 
     /**
      * Warna badge untuk status kapasitas
      */
-    public function getStatusKapasitasColorAttribute(): string
+    public function getStatusKapasitasColorAttribute()
     {
-        return match($this->status_kapasitas) {
-            'penuh' => 'red',
-            'peringatan' => 'yellow',
-            'aman' => 'green',
-            default => 'gray'
-        };
+        $persentase = $this->persentase_kapasitas;
+        
+        if ($persentase >= 90) {
+            return 'red';
+        } elseif ($persentase >= 70) {
+            return 'orange';
+        } elseif ($persentase >= 50) {
+            return 'yellow';
+        } else {
+            return 'green';
+        }
     }
-
-    /**
-     * Text untuk status kapasitas
-     */
-    public function getStatusKapasitasTextAttribute(): string
-    {
-        return match($this->status_kapasitas) {
-            'penuh' => 'Penuh',
-            'peringatan' => 'Peringatan',
-            'aman' => 'Aman',
-            default => 'Unknown'
-        };
-    }
-
     /**
      * Hitung total limbah yang masuk hari ini
      */
@@ -318,5 +310,11 @@ class Penyimpanan extends Model
             'tanggal_pembuatan.before_or_equal' => 'Tanggal pembuatan tidak boleh lebih dari hari ini.',
             'status.required' => 'Status wajib dipilih.'
         ];
+    }
+
+    // Tambahkan relationship ke PengelolaanLimbah
+    public function pengelolaanLimbahs()
+    {
+        return $this->hasMany(PengelolaanLimbah::class);
     }
 }

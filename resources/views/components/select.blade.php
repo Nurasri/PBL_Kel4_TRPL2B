@@ -1,9 +1,10 @@
-@props(['name', 'options' => [], 'value' => '', 'placeholder' => null, 'multiple' => false])
+@props(['name', 'options' => [], 'value' => '', 'placeholder' => null, 'multiple' => false, 'disabled' => false])
 
 <select 
     name="{{ $name }}{{ $multiple ? '[]' : '' }}" 
     id="{{ $name }}"
     {{ $multiple ? 'multiple' : '' }}
+    {{ $disabled ? 'disabled' : '' }}
     {{ $attributes->merge([
         'class' => 'block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400'
     ]) }}

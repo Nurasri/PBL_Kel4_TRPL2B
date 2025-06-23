@@ -62,6 +62,18 @@ class LaporanHarian extends Model
         return $query->where('status', $status);
     }
 
+    // Tambahkan scope untuk dashboard
+    public function scopeThisMonth($query)
+    {
+        return $query->whereMonth('tanggal', now()->month)
+                     ->whereYear('tanggal', now()->year);
+    }
+
+    public function scopeLastMonths($query, $months = 6)
+    {
+        return $query->where('tanggal', '>=', now()->subMonths($months));
+    }
+
     // Accessors
     public function getTanggalLaporanAttribute()
     {
@@ -105,10 +117,19 @@ class LaporanHarian extends Model
         return $this->status === 'draft';
     }
 
+    public function isSubmitted()
+    {
+        return $this->status === 'submitted';
+    }
+
+    // Submit method
     public function submit()
     {
-        $this->status = 'submitted';
-        $this->save();
+        if (!$this->canSubmit()) {
+            throw new \Exception('Laporan tidak dapat disubmit.');
+        }
+
+        $this->update(['status' => 'submitted']);
         
         // Update kapasitas penyimpanan
         $this->penyimpanan->addLimbah($this->jumlah);

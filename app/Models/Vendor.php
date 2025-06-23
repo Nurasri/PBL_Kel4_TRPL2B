@@ -28,6 +28,12 @@ class Vendor extends Model
 
     protected $dates = ['deleted_at'];
 
+    // Tambahkan relationship ke PengelolaanLimbah
+    public function pengelolaanLimbahs()
+    {
+        return $this->hasMany(PengelolaanLimbah::class);
+    }
+
     // Scopes
     public function scopeActive($query)
     {

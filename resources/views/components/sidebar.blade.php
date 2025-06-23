@@ -71,8 +71,17 @@
       <a class="text-lg font-bold text-green-600 dark:text-green-400 transition-all duration-300" 
          href="@if(auth()->user()->isAdmin()) {{ route('admin.dashboard') }} @elseif(auth()->user()->isPerusahaan()) {{ route('perusahaan.dashboard') }} @else {{ route('profile.edit') }} @endif"
          :class="{'text-center': isSidebarCollapsed}">
-        <span x-show="!isSidebarCollapsed" x-transition>EcoCycle</span>
-        <span x-show="isSidebarCollapsed" x-transition class="text-2xl">🌱</span>
+        <!-- Logo saat sidebar tidak collapse -->
+        <img x-show="!isSidebarCollapsed" x-transition 
+            src="{{ asset('assets/img/logo.png') }}" 
+            alt="EcoCycle Logo" 
+            class="h-8 w-auto" />
+
+        <!-- Logo kecil saat sidebar collapse -->
+        <img x-show="isSidebarCollapsed" x-transition 
+            src="{{ asset('assets/img/ikon.png') }}" 
+            alt="EcoCycle Icon" 
+            class="h-8 w-auto" />
       </a>
     </div>
     
@@ -88,17 +97,6 @@
     
     <!-- Bottom Menu -->
     <ul class="px-2 pb-4">
-      <li class="relative px-4 py-3">
-        <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2"
-          href="{{ route('admin.vendor.index') }}"
-          :title="isSidebarCollapsed ? 'Vendor' : ''">
-          <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
-            stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-          </svg>
-          <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Vendor</span>
-        </a>
-      </li>
       <li class="relative px-4 py-3">
         <form method="POST" action="{{ route('logout') }}" class="w-full">
           @csrf
