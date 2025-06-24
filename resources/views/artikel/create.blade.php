@@ -38,7 +38,6 @@
                     </ul>
                 </div>
             @endif
-
             <!-- Debug: tampilkan old input -->
             @if(old())
                 <div class="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
@@ -46,7 +45,6 @@
                     <pre>{{ print_r(old(), true) }}</pre>
                 </div>
             @endif
-
             <form action="{{ route('admin.artikel.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 

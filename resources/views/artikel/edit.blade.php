@@ -186,7 +186,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <x-button variant="secondary" href="{{ route('admin.artikel.show', $artikel) }}">
                         Batal
@@ -201,7 +200,6 @@
             </form>
         </x-card>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const judulInput = document.querySelector('input[name="judul"]');

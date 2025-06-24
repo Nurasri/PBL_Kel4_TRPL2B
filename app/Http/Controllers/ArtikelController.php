@@ -18,12 +18,10 @@ class ArtikelController extends Controller
     public function index(Request $request): View
     {
         $query = Artikel::with(['kategoriArtikel', 'user']);
-
         // Search
         if ($request->filled('search')) {
             $query->search($request->search);
         }
-
         // Filter by category
         if ($request->filled('kategori_artikel_id')) {
             $query->byKategori($request->kategori_artikel_id);
