@@ -23,7 +23,6 @@
         @if (session('error'))
             <x-alert type="error" dismissible>{{ session('error') }}</x-alert>
         @endif
-
         <!-- Filter dan Search -->
         <x-card class="mb-6">
             <form method="GET" action="{{ route('admin.artikel.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -32,7 +31,6 @@
                     <x-input type="text" name="search" value="{{ request('search') }}" 
                              placeholder="Judul artikel..." />
                 </div>
-                
                 <div>
                     <x-label>Kategori</x-label>
                     <x-select name="kategori_artikel_id">

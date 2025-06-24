@@ -46,7 +46,6 @@ class Artikel extends Model
     protected static function boot()
     {
         parent::boot();
-
         static::creating(function ($model) {
             if (empty($model->slug)) {
                 $model->slug = self::generateSlug($model->judul);
@@ -56,7 +55,6 @@ class Artikel extends Model
                 $model->reading_time = self::calculateReadingTime($model->konten);
             }
         });
-
         static::updating(function ($model) {
             if ($model->isDirty('judul')) {
                 $model->slug = self::generateSlug($model->judul, $model->id);

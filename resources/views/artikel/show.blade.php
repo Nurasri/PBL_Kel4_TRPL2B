@@ -111,7 +111,6 @@
                     <div class="prose prose-lg max-w-none dark:prose-invert">
                         {!! nl2br(e($artikel->konten)) !!}
                     </div>
-
                     <!-- SEO Info (for admin) -->
                     @if(Auth::user()->isAdmin() && ($artikel->meta_title || $artikel->meta_description))
                         <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -132,7 +131,6 @@
                     @endif
                 </x-card>
             </div>
-
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Article Info -->
