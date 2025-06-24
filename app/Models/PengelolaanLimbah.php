@@ -136,7 +136,6 @@ class PengelolaanLimbah extends Model
         return $query->where('status', '!=', 'selesai')
                  ->where('tanggal_mulai', '<', now()->subDays($days));
     }
-
     // Static methods
     public static function getJenisPengelolaanOptions(): array
     {
@@ -145,7 +144,6 @@ class PengelolaanLimbah extends Model
             'vendor_eksternal' => 'Vendor Eksternal',
         ];
     }
-
     public static function getMetodePengelolaanOptions(): array
     {
         return [
@@ -161,7 +159,6 @@ class PengelolaanLimbah extends Model
             'stabilization' => 'Stabilization (Stabilisasi)',
         ];
     }
-
     public static function getStatusOptions(): array
     {
         return [

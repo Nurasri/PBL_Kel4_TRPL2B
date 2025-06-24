@@ -15,7 +15,6 @@
                 </x-button>
             </div>
         </div>
-
         @if ($errors->any())
             <x-alert type="error">
                 <ul class="list-disc list-inside">
@@ -25,7 +24,6 @@
                 </ul>
             </x-alert>
         @endif
-
         <!-- Info Pengelolaan Saat Ini -->
         <x-card class="mb-6">
             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Informasi Pengelolaan Saat Ini</h3>

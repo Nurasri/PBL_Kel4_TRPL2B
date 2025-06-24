@@ -134,7 +134,6 @@ class LaporanHarian extends Model
         // Update kapasitas penyimpanan
         $this->penyimpanan->addLimbah($this->jumlah);
     }
-
     // Static methods
     public static function getStatusOptions(): array
     {
@@ -143,7 +142,6 @@ class LaporanHarian extends Model
             'submitted' => 'Disubmit'
         ];
     }
-
     public static function validationRules($id = null): array
     {
         return [
@@ -154,7 +152,6 @@ class LaporanHarian extends Model
             'keterangan' => 'nullable|string|max:1000'
         ];
     }
-
     public static function validationMessages(): array
     {
         return [

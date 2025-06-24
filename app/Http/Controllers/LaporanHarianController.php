@@ -165,21 +165,17 @@ class LaporanHarianController extends Controller
             'jumlah.min' => 'Jumlah limbah harus lebih dari 0.',
             'satuan.required' => 'Satuan wajib diisi.',
         ]);
-
         try {
             DB::beginTransaction();
-
             // Validasi penyimpanan milik perusahaan
             $penyimpanan = Penyimpanan::where('id', $request->penyimpanan_id)
                 ->where('perusahaan_id', $user->perusahaan->id)
                 ->where('jenis_limbah_id', $request->jenis_limbah_id)
                 ->where('status', 'aktif')
                 ->first();
-
             if (!$penyimpanan) {
                 return back()->withErrors(['penyimpanan_id' => 'Penyimpanan tidak valid atau tidak sesuai dengan jenis limbah.']);
             }
-
             // Cek kapasitas penyimpanan
             $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
             if ($request->jumlah > $sisaKapasitas) {
@@ -188,7 +184,6 @@ class LaporanHarianController extends Controller
                                number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->satuan
                 ]);
             }
-
             // Buat laporan harian
             $laporanHarian = LaporanHarian::create([
                 'perusahaan_id' => $user->perusahaan->id,

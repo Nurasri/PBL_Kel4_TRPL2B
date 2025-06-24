@@ -24,7 +24,6 @@
                     </div>
                 </div>
             @endif
-
             <div class="flex space-x-2">
                 @if($laporanHarian->canEdit())
                     <x-button variant="secondary" href="{{ route('laporan-harian.edit', $laporanHarian) }}">
@@ -41,7 +40,6 @@
                 </x-button>
             </div>
         </div>
-
         @if (session('success'))
             <x-alert type="success" dismissible>{{ session('success') }}</x-alert>
         @endif

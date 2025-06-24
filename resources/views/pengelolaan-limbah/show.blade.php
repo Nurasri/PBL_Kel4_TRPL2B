@@ -2,7 +2,6 @@
     <x-slot:title>
         Detail Pengelolaan Limbah
     </x-slot:title>
-    
     <div class="container px-6 mx-auto grid">
         <div class="flex justify-between items-center">
             <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
@@ -19,7 +18,6 @@
                 </x-button>
             </div>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Informasi Utama -->
             <div class="lg:col-span-2">

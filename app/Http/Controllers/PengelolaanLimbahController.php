@@ -89,7 +89,6 @@ class PengelolaanLimbahController extends Controller
             'vendorOptions'
         ));
     }
-
     /**
      * Show the form for creating a new pengelolaan
      */
@@ -101,7 +100,6 @@ class PengelolaanLimbahController extends Controller
             return redirect()->route('perusahaan.create')
                 ->with('error', 'Silakan lengkapi profil perusahaan terlebih dahulu.');
         }
-
         // Ambil jenis limbah yang memiliki stok di penyimpanan
         $jenisLimbahs = JenisLimbah::whereHas('penyimpanans', function ($query) use ($user) {
             $query->where('perusahaan_id', $user->perusahaan->id)
@@ -119,7 +117,6 @@ class PengelolaanLimbahController extends Controller
                 ->where('perusahaan_id', $user->perusahaan->id)
                 ->sum('kapasitas_terpakai');
         });
-
         $vendors = Vendor::where('status', 'aktif')->get();
 
         return view('pengelolaan-limbah.create', compact('jenisLimbahs', 'vendors'));

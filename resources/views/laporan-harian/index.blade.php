@@ -110,7 +110,6 @@
                 </form>
             </x-card>
         @endif
-
         <!-- Tabel Laporan -->
         <x-card>
             @if($laporan->count() > 0)
@@ -419,7 +418,6 @@
                         handleSelectAll(this);
                     });
                 }
-
                 // Handle individual checkbox changes
                 itemCheckboxes.forEach(checkbox => {
                     checkbox.addEventListener('change', function() {

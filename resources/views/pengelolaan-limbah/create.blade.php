@@ -10,7 +10,6 @@
                 Kembali
             </x-button>
         </div>
-
         @if ($errors->any())
             <x-alert type="error">
                 <ul class="list-disc list-inside">
@@ -59,7 +58,6 @@
                                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-
                             <!-- Jenis Limbah -->
                             <div>
                                 <label for="jenis_limbah_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

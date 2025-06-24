@@ -2,7 +2,6 @@
     <x-slot:title>
         Tambah Laporan Harian
     </x-slot:title>
-    
     <div class="container px-6 mx-auto grid">
         <div class="flex justify-between items-center">
             <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
@@ -12,7 +11,6 @@
                 Kembali
             </x-button>
         </div>
-
         @if ($errors->any())
             <x-alert type="error">
                 <ul class="list-disc list-inside">
@@ -22,18 +20,15 @@
                 </ul>
             </x-alert>
         @endif
-
         <x-card>
             <form action="{{ route('laporan-harian.store') }}" method="POST" id="laporan-form">
                 @csrf
-                
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Kolom Kiri -->
                     <div class="space-y-4">
                         <x-form-group label="Tanggal Laporan" name="tanggal" required>
                             <x-input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required />
                         </x-form-group>
-
                         <!-- Jenis Limbah - Ganti dengan HTML biasa -->
                         <div class="mb-4">
                             <label for="jenis_limbah_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -51,7 +46,6 @@
                                 @endforeach
                             </select>
                         </div>
-
                         <!-- Penyimpanan - Ganti dengan HTML biasa -->
                         <div class="mb-4">
                             <label for="penyimpanan_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -61,7 +55,6 @@
                                     class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400">
                                 <option value="">Pilih jenis limbah terlebih dahulu</option>
                             </select>
-                            
                             <!-- Debug info -->
                             <div id="debug-info" class="mt-1 text-xs text-gray-500">
                                 Status: <span id="debug-status">Menunggu pilihan jenis limbah...</span>
@@ -83,7 +76,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-2 gap-4">
                             <x-form-group label="Jumlah" name="jumlah" required>
                                 <x-input type="number" id="jumlah" name="jumlah" step="0.01" min="0.01" 
