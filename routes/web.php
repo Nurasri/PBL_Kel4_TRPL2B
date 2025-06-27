@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ArtikelController;
+use App\Http\Controllers\Frontend\ArtikelController as FrontendArtikelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PerusahaanController;
 use App\Http\Controllers\JenisLimbahController;

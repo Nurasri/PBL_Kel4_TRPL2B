@@ -224,7 +224,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-600 dark:text-gray-400">Total Penyimpanan:</span>
-                        <span class="text-sm font-medium">{{ $jenisLimbah->penyimpanan()->count() }}</span>
+                        <span class="text-sm font-medium">{{ $jenisLimbah->penyimpanans()->count() }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-600 dark:text-gray-400">Status:</span>

@@ -212,7 +212,7 @@
                                     <td class="px-4 py-3">
                                         <div class="flex items-center space-x-2 text-sm">
                                             @if(Route::has('artikel.show'))
-                                                <a href="{{ route('artikel.show', $artikel) }}"
+                                                <a href="{{ route('admin.artikel.show', $artikel) }}"
                                                     class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                                                     title="Lihat Artikel">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +224,7 @@
                                             
                                             @if(Route::has('artikel.edit'))
                                                 @can('update', $artikel)
-                                                    <a href="{{ route('artikel.edit', $artikel) }}"
+                                                    <a href="{{ route('admin.artikel.edit', $artikel) }}"
                                                         class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                                                         title="Edit Artikel">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,7 +252,7 @@
                         <p class="text-sm text-gray-500">
                             Menampilkan 5 artikel terbaru dari {{ $kategoriArtikel->artikels_count }} total artikel.
                             @if(Route::has('artikel.index'))
-                                <a href="{{ route('artikel.index', ['kategori' => $kategoriArtikel->id]) }}" 
+                                <a href="{{ route('admin.artikel.index', ['kategori' => $kategoriArtikel->id]) }}" 
                                    class="text-blue-600 hover:text-blue-800">
                                     Lihat semua artikel
                                 </a>

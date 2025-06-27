@@ -87,8 +87,8 @@ class JenisLimbahController extends Controller
         // Load relationships dengan count
         $jenisLimbah->loadCount([
             'laporanHarian',
-            'pengelolaanLimbah',
-            'penyimpanan'
+            'pengelolaanLimbahs',
+            'penyimpanans'
         ]);
 
         // Load recent activities
@@ -98,13 +98,13 @@ class JenisLimbahController extends Controller
             ->take(5)
             ->get();
 
-        $recentPengelolaan = $jenisLimbah->pengelolaanLimbah()
+        $recentPengelolaan = $jenisLimbah->pengelolaanLimbahs()
             ->with(['perusahaan', 'vendor'])
             ->latest()
             ->take(5)
             ->get();
 
-        $activePenyimpanan = $jenisLimbah->penyimpanan()
+        $activePenyimpanan = $jenisLimbah->penyimpanans()
             ->with('perusahaan')
             ->where('status', 'aktif')
             ->get();
@@ -114,10 +114,10 @@ class JenisLimbahController extends Controller
             ->where('status', 'submitted')
             ->sum('jumlah');
 
-        $totalPengelolaanVolume = $jenisLimbah->pengelolaanLimbah()
+        $totalPengelolaanVolume = $jenisLimbah->pengelolaanLimbahs()
             ->sum('jumlah_dikelola');
 
-        $avgEfisiensi = $jenisLimbah->pengelolaanLimbah()
+        $avgEfisiensi = $jenisLimbah->pengelolaanLimbahs()
             ->whereHas('laporanHasilPengelolaan')
             ->with('laporanHasilPengelolaan')
             ->get()
@@ -178,7 +178,7 @@ class JenisLimbahController extends Controller
         abort_unless(auth()->user()->isAdmin(), 403);
 
         // Cek apakah jenis limbah sedang digunakan
-        if ($jenisLimbah->laporanHarian()->exists() || $jenisLimbah->penyimpanan()->exists()) {
+        if ($jenisLimbah->laporanHarian()->exists() || $jenisLimbah->penyimpanans()->exists()) {
             return redirect()->route('jenis-limbah.index')
                 ->with('error', 'Jenis limbah tidak dapat dihapus karena sedang digunakan.');
         }

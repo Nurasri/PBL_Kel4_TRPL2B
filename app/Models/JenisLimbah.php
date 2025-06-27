@@ -164,7 +164,7 @@ class JenisLimbah extends Model
 
     public function penyimpanans()
     {
-        return $this->hasMany(Penyimpanan::class, 'jenis_limbah_id');
+        return $this->hasMany(Penyimpanan::class);
     }
 
     public function pengelolaanLimbahs()
@@ -172,6 +172,7 @@ class JenisLimbah extends Model
         return $this->hasMany(PengelolaanLimbah::class);
     }
 
+    
     // Helper methods
     public function isActive()
     {

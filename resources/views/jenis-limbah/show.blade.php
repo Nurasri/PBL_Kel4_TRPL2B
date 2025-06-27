@@ -132,7 +132,7 @@
                     </div>
                     <div class="bg-green-50 dark:bg-green-900 p-4 rounded-lg">
                         <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {{ $jenisLimbah->penyimpanan()->count() }}
+                            {{ $jenisLimbah->penyimpanans()->count() }}
                         </div>
                         <div class="text-sm text-green-600 dark:text-green-400">Lokasi Penyimpanan</div>
                     </div>

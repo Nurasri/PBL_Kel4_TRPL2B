@@ -104,7 +104,7 @@ class ArtikelController extends Controller
             
             \Log::info('Artikel berhasil dibuat dengan ID: ' . $artikel->id);
 
-            return redirect()->route('artikel.index')
+            return redirect()->route('admin.artikel.index')
                 ->with('success', 'Artikel berhasil ditambahkan.');
             
         } catch (\Exception $e) {

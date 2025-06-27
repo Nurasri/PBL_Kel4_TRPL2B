@@ -59,9 +59,9 @@ class PengelolaanLimbah extends Model
         return $this->belongsTo(LaporanHarian::class);
     }
 
-    public function laporanHasil()
+    public function laporanHasilPengelolaan()
     {
-        return $this->hasOne(LaporanHasilPengelolaan::class);
+        return $this->hasOne(\App\Models\LaporanHasilPengelolaan::class, 'pengelolaan_limbah_id');
     }
 
     public function hasLaporanHasil()
