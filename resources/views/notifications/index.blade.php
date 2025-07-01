@@ -7,7 +7,7 @@
                 Notifikasi
             </h2>
             @if(auth()->user()->unreadNotifications()->count() > 0)
-                <form method="POST" action="{{ route('notifications.mark-all-read') }}">
+                <form method="POST" action="{{ route('api.notifications.mark-all-read') }}">
                     @csrf
                     <x-button variant="secondary" type="submit">
                         Tandai Semua Dibaca

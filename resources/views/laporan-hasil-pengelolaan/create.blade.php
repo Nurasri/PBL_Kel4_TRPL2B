@@ -23,7 +23,7 @@
             </x-alert>
         @endif
 
-        @if($pengelolaanLimbahs->isEmpty())
+        @if($pengelolaanLimbah->isEmpty())
             <x-card>
                 <div class="text-center py-8">
                     <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@
                             <x-form-group label="Pengelolaan Limbah" name="pengelolaan_limbah_id" required>
                                 <x-select name="pengelolaan_limbah_id" id="pengelolaan_select" required>
                                     <option value="">Pilih Pengelolaan Limbah</option>
-                                    @foreach($pengelolaanLimbahs as $pengelolaan)
+                                    @foreach($pengelolaanLimbah as $pengelolaan)
                                         <option value="{{ $pengelolaan->id }}" 
                                                 data-jumlah="{{ $pengelolaan->jumlah_dikelola }}"
                                                 data-satuan="{{ $pengelolaan->satuan }}"

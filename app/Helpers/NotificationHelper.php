@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Models\Notification;
 use App\Models\User;
+use App\Events\NotificationSent;
 
 class NotificationHelper
 {
@@ -16,6 +17,9 @@ class NotificationHelper
             'type' => $type,
             'action_url' => $actionUrl
         ]);
+        event(new NotificationSent($notification));
+
+        return $notification;
     }
 
     public static function notifyUser($user, $title, $message, $type = 'info', $actionUrl = null)
