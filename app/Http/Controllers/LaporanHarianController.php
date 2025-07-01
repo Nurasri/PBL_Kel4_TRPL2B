@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\NotificationHelper;
 
 class LaporanHarianController extends Controller
 {
@@ -33,13 +34,13 @@ class LaporanHarianController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->whereHas('jenisLimbah', function ($subQ) use ($search) {
                     $subQ->where('nama', 'like', "%{$search}%")
-                         ->orWhere('kode_limbah', 'like', "%{$search}%");
+                        ->orWhere('kode_limbah', 'like', "%{$search}%");
                 })
-                ->orWhereHas('penyimpanan', function ($subQ) use ($search) {
-                    $subQ->where('nama_penyimpanan', 'like', "%{$search}%");
-                })
-                ->orWhere('keterangan', 'like', "%{$search}%");
-                
+                    ->orWhereHas('penyimpanan', function ($subQ) use ($search) {
+                        $subQ->where('nama_penyimpanan', 'like', "%{$search}%");
+                    })
+                    ->orWhere('keterangan', 'like', "%{$search}%");
+
                 // Untuk admin, tambahkan pencarian berdasarkan nama perusahaan
                 if ($user->isAdmin()) {
                     $q->orWhereHas('perusahaan', function ($subQ) use ($search) {
@@ -82,7 +83,7 @@ class LaporanHarianController extends Controller
         // Data untuk filter
         $jenisLimbahOptions = JenisLimbah::pluck('nama', 'id');
         $statusOptions = LaporanHarian::getStatusOptions();
-        
+
         // Untuk admin, tambahkan filter perusahaan
         $perusahaanOptions = [];
         if ($user->isAdmin()) {
@@ -104,7 +105,7 @@ class LaporanHarianController extends Controller
         return view('laporan-harian.index', compact(
             'laporan',
             'jenisLimbahOptions',
-            'penyimpananOptions', 
+            'penyimpananOptions',
             'statusOptions',
             'perusahaanOptions'
         ));
@@ -116,7 +117,7 @@ class LaporanHarianController extends Controller
     public function create(): View
     {
         $user = Auth::user();
-        
+
         // Hanya perusahaan yang bisa create
         if (!$user->isPerusahaan()) {
             abort(403, 'Hanya perusahaan yang dapat membuat laporan harian.');
@@ -143,7 +144,7 @@ class LaporanHarianController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = Auth::user();
-        
+
         // Hanya perusahaan yang bisa create
         if (!$user->isPerusahaan()) {
             abort(403, 'Hanya perusahaan yang dapat membuat laporan harian.');
@@ -180,8 +181,8 @@ class LaporanHarianController extends Controller
             $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
             if ($request->jumlah > $sisaKapasitas) {
                 return back()->withErrors([
-                    'jumlah' => 'Jumlah melebihi sisa kapasitas penyimpanan. Sisa kapasitas: ' . 
-                               number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->satuan
+                    'jumlah' => 'Jumlah melebihi sisa kapasitas penyimpanan. Sisa kapasitas: ' .
+                        number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->satuan
                 ]);
             }
             // Buat laporan harian
@@ -200,16 +201,20 @@ class LaporanHarianController extends Controller
             // Update kapasitas penyimpanan jika laporan di-submit
             if ($request->has('submit')) {
                 $penyimpanan->increment('kapasitas_terpakai', $request->jumlah);
+                // Cek apakah kapasitas penyimpanan sudah penuh
+                $percentage = ($penyimpanan->kapasitas_terpakai / $penyimpanan->kapasitas_maksimal) * 100;
+                if ($percentage >= 90) {
+                    NotificationHelper::penyimpananFull($penyimpanan);
+                }
             }
 
             DB::commit();
 
-            $message = $request->has('submit') ? 
-                'Laporan harian berhasil dibuat dan disubmit.' : 
+            $message = $request->has('submit') ?
+                'Laporan harian berhasil dibuat dan disubmit.' :
                 'Laporan harian berhasil disimpan sebagai draft.';
 
             return redirect()->route('laporan-harian.index')->with('success', $message);
-
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withErrors(['error' => 'Gagal menyimpan laporan: ' . $e->getMessage()])->withInput();
@@ -222,10 +227,10 @@ class LaporanHarianController extends Controller
     public function show(LaporanHarian $laporanHarian): View
     {
         $user = Auth::user();
-        
+
         // Load relationships
         $laporanHarian->load(['jenisLimbah', 'penyimpanan', 'perusahaan']);
-        
+
         // Check access permission
         if ($user->isPerusahaan() && $laporanHarian->perusahaan_id !== $user->perusahaan->id) {
             abort(403, 'Anda tidak memiliki akses ke laporan ini.');
@@ -240,7 +245,7 @@ class LaporanHarianController extends Controller
     public function edit(LaporanHarian $laporanHarian): View
     {
         $user = Auth::user();
-        
+
         // Hanya perusahaan pemilik yang bisa edit
         if (!$user->isPerusahaan() || $laporanHarian->perusahaan_id !== $user->perusahaan->id) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit laporan ini.');
@@ -273,7 +278,7 @@ class LaporanHarianController extends Controller
     public function update(Request $request, LaporanHarian $laporanHarian): RedirectResponse
     {
         $user = Auth::user();
-        
+
         // Hanya perusahaan pemilik yang bisa update
         if (!$user->isPerusahaan() || $laporanHarian->perusahaan_id !== $user->perusahaan->id) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit laporan ini.');
@@ -312,8 +317,8 @@ class LaporanHarianController extends Controller
             $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
             if ($request->jumlah > $sisaKapasitas) {
                 return back()->withErrors([
-                    'jumlah' => 'Jumlah melebihi sisa kapasitas penyimpanan. Sisa kapasitas: ' . 
-                               number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->satuan
+                    'jumlah' => 'Jumlah melebihi sisa kapasitas penyimpanan. Sisa kapasitas: ' .
+                        number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->satuan
                 ]);
             }
 
@@ -336,12 +341,11 @@ class LaporanHarianController extends Controller
 
             DB::commit();
 
-            $message = $request->has('submit') ? 
-                'Laporan harian berhasil diperbarui dan disubmit.' : 
+            $message = $request->has('submit') ?
+                'Laporan harian berhasil diperbarui dan disubmit.' :
                 'Laporan harian berhasil diperbarui.';
 
             return redirect()->route('laporan-harian.index')->with('success', $message);
-
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withErrors(['error' => 'Gagal memperbarui laporan: ' . $e->getMessage()])->withInput();
@@ -354,7 +358,7 @@ class LaporanHarianController extends Controller
     public function destroy(LaporanHarian $laporanHarian): RedirectResponse
     {
         $user = Auth::user();
-        
+
         // Pastikan user hanya bisa hapus laporan milik perusahaannya
         if ($laporanHarian->perusahaan_id !== $user->perusahaan->id) {
             abort(403, 'Unauthorized access.');
@@ -382,7 +386,7 @@ class LaporanHarianController extends Controller
     public function submit(LaporanHarian $laporanHarian): RedirectResponse
     {
         $user = Auth::user();
-        
+
         // Pastikan user hanya bisa submit laporan milik perusahaannya
         if ($laporanHarian->perusahaan_id !== $user->perusahaan->id) {
             abort(403, 'Unauthorized access.');
@@ -398,27 +402,29 @@ class LaporanHarianController extends Controller
 
             // Validasi kapasitas penyimpanan
             if (!$laporanHarian->penyimpanan->canAccommodate($laporanHarian->jumlah)) {
-                return back()->with('error', 
-                    'Kapasitas penyimpanan tidak mencukupi. Sisa kapasitas: ' . 
-                    number_format($laporanHarian->penyimpanan->sisa_kapasitas, 2) . ' ' . 
-                    $laporanHarian->penyimpanan->satuan
+                return back()->with(
+                    'error',
+                    'Kapasitas penyimpanan tidak mencukupi. Sisa kapasitas: ' .
+                        number_format($laporanHarian->penyimpanan->sisa_kapasitas, 2) . ' ' .
+                        $laporanHarian->penyimpanan->satuan
                 );
             }
 
             $laporanHarian->submit();
 
+            NotificationHelper::laporanHarianSubmitted($laporanHarian);
+
             DB::commit();
 
             return redirect()->route('laporan-harian.index')
-                ->with('success', 'Laporan berhasil disubmit dan kapasitas penyimpanan telah diperbarui.');
-
+                ->with('success', 'Laporan berhasil disubmit.');
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Gagal submit laporan: ' . $e->getMessage());
         }
     }
 
-        /**
+    /**
      * API untuk mendapatkan penyimpanan berdasarkan jenis limbah
      */
     public function getPenyimpananByJenisLimbah(Request $request)
@@ -445,9 +451,9 @@ class LaporanHarianController extends Controller
             // Transform data
             $result = $penyimpanans->map(function ($penyimpanan) {
                 $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
-                $persentaseKapasitas = $penyimpanan->kapasitas_maksimal > 0 ? 
+                $persentaseKapasitas = $penyimpanan->kapasitas_maksimal > 0 ?
                     ($penyimpanan->kapasitas_terpakai / $penyimpanan->kapasitas_maksimal * 100) : 0;
-                
+
                 return [
                     'id' => $penyimpanan->id,
                     'nama_penyimpanan' => $penyimpanan->nama_penyimpanan,
@@ -462,11 +468,10 @@ class LaporanHarianController extends Controller
             });
 
             return response()->json($result);
-
         } catch (\Exception $e) {
             \Log::error('Error in getPenyimpananByJenisLimbah: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-        
+
             return response()->json([
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
@@ -478,9 +483,9 @@ class LaporanHarianController extends Controller
     public function getJenisLimbahInfo(Request $request)
     {
         $jenisLimbahId = $request->jenis_limbah_id;
-        
+
         $jenisLimbah = JenisLimbah::find($jenisLimbahId);
-        
+
         if (!$jenisLimbah) {
             return response()->json(['error' => 'Jenis limbah tidak ditemukan'], 404);
         }
@@ -506,7 +511,7 @@ class LaporanHarianController extends Controller
     {
         $user = Auth::user();
         $perusahaanId = $user->perusahaan->id;
-        
+
         $startDate = $request->get('start_date', now()->startOfMonth());
         $endDate = $request->get('end_date', now()->endOfMonth());
 
@@ -514,29 +519,29 @@ class LaporanHarianController extends Controller
             'total_laporan' => LaporanHarian::byPerusahaan($perusahaanId)
                 ->byDateRange($startDate, $endDate)
                 ->count(),
-            
+
             'laporan_draft' => LaporanHarian::byPerusahaan($perusahaanId)
                 ->byStatus('draft')
                 ->byDateRange($startDate, $endDate)
                 ->count(),
-            
+
             'laporan_submitted' => LaporanHarian::byPerusahaan($perusahaanId)
                 ->byStatus('submitted')
                 ->byDateRange($startDate, $endDate)
                 ->count(),
-            
+
             'total_limbah' => LaporanHarian::byPerusahaan($perusahaanId)
                 ->byStatus('submitted')
                 ->byDateRange($startDate, $endDate)
                 ->sum('jumlah'),
-            
+
             'jenis_limbah_terbanyak' => LaporanHarian::byPerusahaan($perusahaanId)
                 ->byStatus('submitted')
                 ->byDateRange($startDate, $endDate)
                 ->with('jenisLimbah')
                 ->get()
                 ->groupBy('jenis_limbah_id')
-                ->map(function($group) {
+                ->map(function ($group) {
                     return [
                         'jenis_limbah' => $group->first()->jenisLimbah->nama,
                         'total' => $group->sum('jumlah'),
@@ -585,15 +590,15 @@ class LaporanHarianController extends Controller
 
         // Simple CSV export
         $filename = 'laporan-harian-' . now()->format('Y-m-d') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($laporan) {
+        $callback = function () use ($laporan) {
             $file = fopen('php://output', 'w');
-            
+
             // Header CSV
             fputcsv($file, [
                 'Tanggal',
@@ -643,7 +648,7 @@ class LaporanHarianController extends Controller
 
         $user = Auth::user();
         $laporanIds = $request->laporan_ids;
-        
+
         // Pastikan semua laporan milik perusahaan user
         $laporan = LaporanHarian::whereIn('id', $laporanIds)
             ->where('perusahaan_id', $user->perusahaan->id)
@@ -686,13 +691,12 @@ class LaporanHarianController extends Controller
 
             $actionName = $request->action === 'delete' ? 'dihapus' : 'disubmit';
             $message = "{$successCount} laporan berhasil {$actionName}.";
-            
+
             if ($errorCount > 0) {
                 $message .= " {$errorCount} laporan gagal diproses.";
             }
 
             return redirect()->route('laporan-harian.index')->with('success', $message);
-
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Gagal melakukan aksi bulk: ' . $e->getMessage());

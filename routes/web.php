@@ -15,7 +15,7 @@ use App\Http\Controllers\KategoriArtikelController;
 use App\Http\Controllers\PengelolaanLimbahController;
 use App\Http\Controllers\LaporanHasilPengelolaanController;
 
-    Route::get('/', function () {
+Route::get('/', function () {
     return view('frontend.welcome');
 });
 // Frontend routes (public access)
@@ -27,7 +27,7 @@ Route::prefix('artikel')->name('frontend.artikel.')->group(function () {
 });
 
 // Authentication routes
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 // Routes yang memerlukan autentikasi
 Route::middleware('auth')->group(function () {
@@ -153,6 +153,7 @@ Route::middleware('auth')->group(function () {
             ->name('laporan-hasil-pengelolaan.export');
         Route::get('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}/dokumentasi/{index}', [LaporanHasilPengelolaanController::class, 'downloadDokumentasi'])
             ->name('laporan-hasil-pengelolaan.download-dokumentasi');
+        Route::post('/laporan-hasil-pengelolaan/bulk-action', [LaporanHasilPengelolaanController::class, 'bulkAction'])->name('laporan-hasil-pengelolaan.bulk-action');
 
         // API endpoints
         Route::get('/api/pengelolaan-selesai', [LaporanHasilPengelolaanController::class, 'getPengelolaanSelesai'])
@@ -198,4 +199,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{user}/password/edit', [UserController::class, 'editPassword'])->name('users.password.edit');
         Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
     });
+
+    // Tambahkan di dalam middleware auth
+    Route::get('/notifications', function () {
+        $notifications = auth()->user()->notifications()->paginate(20);
+        return view('notifications.index', compact('notifications'));
+    })->name('notifications.index');
+
+    Route::post('/notifications/{notification}/read', function (\App\Models\Notification $notification) {
+        if ($notification->user_id === auth()->id()) {
+            $notification->markAsRead();
+        }
+        return response()->json(['success' => true]);
+    })->name('notifications.read');
+    // Tambahkan di dalam middleware auth
+    Route::post('/notifications/mark-all-read', function () {
+        auth()->user()->notifications()->whereNull('read_at')->update(['read_at' => now()]);
+        return back()->with('success', 'Semua notifikasi telah ditandai sebagai dibaca');
+    })->name('notifications.mark-all-read');
+
+    
 });

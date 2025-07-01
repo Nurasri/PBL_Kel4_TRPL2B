@@ -8,6 +8,8 @@ use App\Models\Penyimpanan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use App\Helpers\NotificationHelper;
+
 
 class PenyimpananController extends Controller
 {
@@ -143,6 +145,8 @@ class PenyimpananController extends Controller
             $penyimpanan = new Penyimpanan($request->all());
             $penyimpanan->perusahaan_id = auth()->user()->perusahaan->id;
             $penyimpanan->save();
+
+            NotificationHelper::penyimpananCreated($penyimpanan);
 
             return redirect()->route('penyimpanan.index')
                 ->with('success', 'Penyimpanan berhasil ditambahkan.');

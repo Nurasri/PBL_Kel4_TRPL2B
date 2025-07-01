@@ -2,15 +2,16 @@
 
 namespace App\Http;
 
-use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use App\Http\Middleware\AdminMiddleware;
-use App\Http\Middleware\PerusahaanMiddleware;
-use App\Http\Middleware\TrustProxies;
-use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\TrimStrings;
+use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\Facades\Schedule;
 use App\Http\Middleware\ValidateSignature;
+use App\Http\Middleware\PerusahaanMiddleware;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use App\Http\Middleware\PreventRequestsDuringMaintenance;
 
 class Kernel extends HttpKernel
 {
@@ -48,7 +49,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
@@ -77,4 +78,10 @@ class Kernel extends HttpKernel
     ];
 
     protected $middlewareAliases = $this->routeMiddleware;
-} 
+
+    protected function schedule(Schedule $schedule)
+    {
+        // Cek notifikasi setiap hari jam 9 pagi
+        $schedule->command('notifications:check')->dailyAt('09:00');
+    }
+}

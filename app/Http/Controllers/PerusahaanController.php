@@ -12,6 +12,8 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Helpers\NotificationHelper;
+use App\Models\Penyimpanan;
 
 class PerusahaanController extends Controller
 {
@@ -123,6 +125,20 @@ class PerusahaanController extends Controller
             ];
         }
 
+        // Storage capacity warning
+        $fullStorages = Penyimpanan::whereRaw('(kapasitas_terpakai / kapasitas_maksimal) > 0.9')->count();
+        if ($fullStorages > 0) {
+            $alerts[] = [
+                'type' => 'warning',
+                'title' => 'Kapasitas Penyimpanan',
+                'message' => "Ada {$fullStorages} penyimpanan yang hampir penuh (>90%).",
+                'action' => [
+                    'text' => 'Lihat Penyimpanan',
+                    'url' => route('penyimpanan.index')
+                ]
+            ];
+        }
+
         // Check for pending pengelolaan
         $pendingPengelolaan = PengelolaanLimbah::where('perusahaan_id', $perusahaanId)
             ->where('status', 'diproses')->count();
@@ -187,10 +203,10 @@ class PerusahaanController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama_perusahaan', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('telepon', 'like', "%{$search}%")
-                  ->orWhere('no_registrasi', 'like', "%{$search}%")
-                  ->orWhere('alamat', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('telepon', 'like', "%{$search}%")
+                    ->orWhere('no_registrasi', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%");
             });
         }
 
@@ -263,6 +279,9 @@ class PerusahaanController extends Controller
             'logo' => $logoPath,
         ]);
 
+        NotificationHelper::perusahaanRegistered($perusahaan);
+        NotificationHelper::welcomeNewUser(auth()->user());
+
         return redirect()->route('perusahaan.dashboard')
             ->with('success', 'Profil perusahaan berhasil dibuat.');
     }
@@ -320,7 +339,9 @@ class PerusahaanController extends Controller
 
         $perusahaan->update($updateData);
 
-        return redirect()->route('perusahaan.show', $perusahaan)
+        NotificationHelper::perusahaanUpdated($perusahaan);
+
+        return redirect()->route('perusahaan.dashboard')
             ->with('success', 'Profil perusahaan berhasil diperbarui.');
     }
 
