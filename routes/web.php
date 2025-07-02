@@ -15,7 +15,7 @@ use App\Http\Controllers\KategoriArtikelController;
 use App\Http\Controllers\PengelolaanLimbahController;
 use App\Http\Controllers\LaporanHasilPengelolaanController;
 
-    Route::get('/', function () {
+Route::get('/', function () {
     return view('frontend.welcome');
 });
 // Frontend routes (public access)
@@ -27,7 +27,7 @@ Route::prefix('artikel')->name('frontend.artikel.')->group(function () {
 });
 
 // Authentication routes
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 // Routes yang memerlukan autentikasi
 Route::middleware('auth')->group(function () {
@@ -153,6 +153,7 @@ Route::middleware('auth')->group(function () {
             ->name('laporan-hasil-pengelolaan.export');
         Route::get('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}/dokumentasi/{index}', [LaporanHasilPengelolaanController::class, 'downloadDokumentasi'])
             ->name('laporan-hasil-pengelolaan.download-dokumentasi');
+        Route::post('/laporan-hasil-pengelolaan/bulk-action', [LaporanHasilPengelolaanController::class, 'bulkAction'])->name('laporan-hasil-pengelolaan.bulk-action');
 
         // API endpoints
         Route::get('/api/pengelolaan-selesai', [LaporanHasilPengelolaanController::class, 'getPengelolaanSelesai'])
@@ -198,4 +199,71 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{user}/password/edit', [UserController::class, 'editPassword'])->name('users.password.edit');
         Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
     });
+
+    // Tambahkan di dalam middleware auth
+    Route::get('/notifications', function () {
+        $notifications = auth()->user()->notifications()->paginate(20);
+        return view('notifications.index', compact('notifications'));
+    })->name('notifications.index');
+
+    Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/', function () {
+            $notifications = auth()->user()->notifications()
+                ->latest()
+                ->take(10)
+                ->get();
+
+            return response()->json([
+                'notifications' => $notifications,
+                'unread_count' => auth()->user()->unread_notification_count
+            ]);
+        })->name('index');
+
+        Route::post('/{notification}/read', function (\App\Models\Notification $notification) {
+            if ($notification->user_id === auth()->id()) {
+                $notification->markAsRead();
+                return response()->json(['success' => true]);
+            }
+            return response()->json(['error' => 'Unauthorized'], 403);
+        })->name('read');
+
+        Route::post('/mark-all-read', function () {
+            auth()->user()->notifications()->whereNull('read_at')->update(['read_at' => now()]);
+            return response()->json(['success' => true]);
+        })->name('mark-all-read');
+    });
+
 });
+
+// Route testing (hapus setelah testing)
+    Route::prefix('test-notifications')->middleware('auth')->group(function () {
+        Route::get('/perusahaan-registered', function () {
+            $perusahaan = auth()->user()->perusahaan;
+            \App\Helpers\NotificationHelper::perusahaanRegistered($perusahaan);
+            return back()->with('success', 'Test notification sent');
+        });
+
+        Route::get('/laporan-submitted', function () {
+            $laporan = \App\Models\LaporanHarian::first();
+            if ($laporan) {
+                \App\Helpers\NotificationHelper::laporanHarianSubmitted($laporan);
+            }
+            return back()->with('success', 'Test notification sent');
+        });
+
+        Route::get('/system-maintenance', function () {
+            \App\Helpers\NotificationHelper::systemMaintenance('Test maintenance notification');
+            return back()->with('success', 'Test notification sent');
+        });
+
+        Route::get('/all-types', function () {
+            $user = auth()->user();
+
+            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Success', 'This is a success notification', 'success');
+            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Info', 'This is an info notification', 'info');
+            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Warning', 'This is a warning notification', 'warning');
+            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Danger', 'This is a danger notification', 'danger');
+
+            return back()->with('success', 'All test notifications sent');
+        });
+    });

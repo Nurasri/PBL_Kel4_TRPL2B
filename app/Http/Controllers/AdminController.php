@@ -16,6 +16,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\NotificationHelper;
 
 class AdminController extends Controller
 {
@@ -203,17 +204,19 @@ class AdminController extends Controller
                 'action' => route('pengelolaan-limbah.index')
             ];
         }
+        $inactiveCompanies = Perusahaan::whereDoesntHave('laporanHarian', function($query) {
+            $query->where('created_at', '>', Carbon::now()->subDays(7));
+        })->count();
 
-        // Storage capacity warning
-        $fullStorages = Penyimpanan::whereRaw('(kapasitas_terpakai / kapasitas_maksimal) > 0.9')->count();
-        if ($fullStorages > 0) {
-            $alerts[] = [
-                'type' => 'warning',
-                'title' => 'Kapasitas Penyimpanan',
-                'message' => "Ada {$fullStorages} penyimpanan yang hampir penuh (>90%).",
-                'action' => route('penyimpanan.index')
-            ];
+        if ($inactiveCompanies > 0) {
+            NotificationHelper::notifyAdmins(
+                'Perusahaan Tidak Aktif',
+                "{$inactiveCompanies} perusahaan tidak melaporkan aktivitas selama 7 hari terakhir",
+                'warning',
+                route('admin.perusahaan.index')
+            );
         }
+
 
         return $alerts;
     }

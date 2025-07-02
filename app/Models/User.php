@@ -84,4 +84,21 @@ class User extends Authenticatable
             'last_login_ip' => request()->ip(),
         ]);
     }
+
+    // Tambahkan di dalam class User
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->unread();
+    }
+
+    public function getUnreadNotificationCountAttribute()
+    {
+        return $this->unreadNotifications()->count();
+    }
 }

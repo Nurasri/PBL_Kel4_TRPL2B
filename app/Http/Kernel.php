@@ -2,15 +2,16 @@
 
 namespace App\Http;
 
-use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use App\Http\Middleware\AdminMiddleware;
-use App\Http\Middleware\PerusahaanMiddleware;
-use App\Http\Middleware\TrustProxies;
-use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\TrimStrings;
+use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\Facades\Schedule;
 use App\Http\Middleware\ValidateSignature;
+use App\Http\Middleware\PerusahaanMiddleware;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use App\Http\Middleware\PreventRequestsDuringMaintenance;
 
 class Kernel extends HttpKernel
 {
@@ -48,7 +49,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
@@ -77,4 +78,34 @@ class Kernel extends HttpKernel
     ];
 
     protected $middlewareAliases = $this->routeMiddleware;
-} 
+
+    protected function schedule(Schedule $schedule)
+    {
+        // Notifikasi utama
+        $schedule->command('notifications:check')->dailyAt('09:00');
+        $schedule->command('notifications:periodic')->dailyAt('08:00');
+
+        // Reminder deadline
+        $schedule->command('deadline:remind')->dailyAt('10:00');
+
+        // Security check
+        $schedule->command('security:check')->weekly();
+
+        // Performance monitoring
+        $schedule->command('performance:monitor')->weekly();
+
+        // Cleanup notifikasi lama
+        $schedule->call(function () {
+            \App\Models\Notification::where('created_at', '<', now()->subMonths(3))->delete();
+        })->monthly();
+
+        // Backup reminder
+        $schedule->call(function () {
+            \App\Helpers\NotificationHelper::notifyAdmins(
+                'Reminder Backup',
+                'Jangan lupa untuk melakukan backup data sistem secara berkala',
+                'info'
+            );
+        })->weekly();
+    }
+}

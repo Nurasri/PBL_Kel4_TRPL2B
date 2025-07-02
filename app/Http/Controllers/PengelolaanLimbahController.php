@@ -12,6 +12,7 @@ use App\Models\PengelolaanLimbah;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use App\Helpers\NotificationHelper;
 
 class PengelolaanLimbahController extends Controller
 {
@@ -127,6 +128,9 @@ class PengelolaanLimbahController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (empty($request->vendor_id)) {
+            $request->merge(['vendor_id' => null]);
+        }
         $request->validate([
             'tanggal_mulai' => 'required|date|after_or_equal:today',
             'jenis_limbah_id' => 'required|exists:jenis_limbahs,id',
@@ -179,12 +183,14 @@ class PengelolaanLimbahController extends Controller
             // Generate nomor manifest otomatis
             $nomorManifest = $this->generateNomorManifest();
 
+            $vendorId = $request->jenis_pengelolaan === 'vendor_eksternal' ? $request->vendor_id : null;
+
             // Buat pengelolaan limbah
             $pengelolaan = new PengelolaanLimbah([
                 'perusahaan_id' => $user->perusahaan->id,
                 'jenis_limbah_id' => $request->jenis_limbah_id,
                 'penyimpanan_id' => $request->penyimpanan_id,
-                'vendor_id' => $request->vendor_id,
+                'vendor_id' => $vendorId,
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'jumlah_dikelola' => $request->jumlah_dikelola,
                 'satuan' => $jenisLimbah->satuan_default,
@@ -202,14 +208,16 @@ class PengelolaanLimbahController extends Controller
             $penyimpanan->kapasitas_terpakai -= $request->jumlah_dikelola;
             $penyimpanan->save();
 
+            NotificationHelper::pengelolaanCreated($pengelolaan);
+
             DB::commit();
 
             return redirect()->route('pengelolaan-limbah.index')
-                ->with('success', 'Pengelolaan limbah berhasil ditambahkan.');
-
+                ->with('success', 'Pengelolaan limbah berhasil dibuat.');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withErrors(['error' => 'Gagal menyimpan: ' . $e->getMessage()])->withInput();
+            return back()->withInput()
+                ->with('error', 'Gagal membuat pengelolaan limbah: ' . $e->getMessage());
         }
     }
 
@@ -327,10 +335,18 @@ class PengelolaanLimbahController extends Controller
             ]);
 
             DB::commit();
+            if ($request->status === 'selesai') {
+                NotificationHelper::notifyUser(
+                    $pengelolaanLimbah->perusahaan->user,
+                    'Pengelolaan Limbah Selesai',
+                    "Pengelolaan {$pengelolaanLimbah->jenisLimbah->nama} telah selesai. Silakan buat laporan hasil.",
+                    'info',
+                    route('laporan-hasil-pengelolaan.create')
+                );
+            }
 
             return redirect()->route('pengelolaan-limbah.index')
                 ->with('success', 'Pengelolaan limbah berhasil diperbarui.');
-
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withErrors(['error' => 'Gagal memperbarui: ' . $e->getMessage()])->withInput();
@@ -345,7 +361,7 @@ class PengelolaanLimbahController extends Controller
         $prefix = 'MNF';
         $date = date('Ymd');
         $lastNumber = PengelolaanLimbah::whereDate('created_at', today())->count() + 1;
-        
+
         return $prefix . $date . str_pad($lastNumber, 3, '0', STR_PAD_LEFT);
     }
 

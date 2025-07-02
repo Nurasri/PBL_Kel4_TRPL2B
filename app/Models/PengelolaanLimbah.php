@@ -69,6 +69,13 @@ class PengelolaanLimbah extends Model
         return $this->laporanHasil()->exists();
     }
 
+    // Tambahkan method ini
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+
     public function canCreateLaporanHasil()
     {
         return $this->status === 'selesai' && !$this->hasLaporanHasil();
@@ -134,7 +141,7 @@ class PengelolaanLimbah extends Model
     public function scopeOverdue($query, $days = 30)
     {
         return $query->where('status', '!=', 'selesai')
-                 ->where('tanggal_mulai', '<', now()->subDays($days));
+            ->where('tanggal_mulai', '<', now()->subDays($days));
     }
     // Static methods
     public static function getJenisPengelolaanOptions(): array

@@ -56,6 +56,13 @@ class Penyimpanan extends Model
         return $this->hasMany(LaporanHarian::class);
     }
 
+    // Tambahkan method ini
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+
     /**
      * Hitung sisa kapasitas
      */
@@ -81,7 +88,7 @@ class Penyimpanan extends Model
     public function getStatusKapasitasTextAttribute()
     {
         $persentase = $this->persentase_kapasitas;
-        
+
         if ($persentase >= 90) {
             return 'Hampir Penuh';
         } elseif ($persentase >= 70) {
@@ -99,7 +106,7 @@ class Penyimpanan extends Model
     public function getStatusKapasitasColorAttribute()
     {
         $persentase = $this->persentase_kapasitas;
-        
+
         if ($persentase >= 90) {
             return 'red';
         } elseif ($persentase >= 70) {
@@ -167,7 +174,7 @@ class Penyimpanan extends Model
         if (!$this->canAccommodate($jumlah)) {
             throw new \Exception('Kapasitas penyimpanan tidak mencukupi');
         }
-        
+
         $this->increment('kapasitas_terpakai', $jumlah);
     }
 
@@ -177,7 +184,7 @@ class Penyimpanan extends Model
         if ($this->kapasitas_terpakai < $jumlah) {
             throw new \Exception('Jumlah limbah tidak mencukupi');
         }
-        
+
         $this->decrement('kapasitas_terpakai', $jumlah);
     }
 
@@ -202,7 +209,7 @@ class Penyimpanan extends Model
      */
     public function scopeByUser($query, $userId)
     {
-        return $query->whereHas('perusahaan', function($q) use ($userId) {
+        return $query->whereHas('perusahaan', function ($q) use ($userId) {
             $q->where('user_id', $userId);
         });
     }
@@ -222,8 +229,8 @@ class Penyimpanan extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('nama_penyimpanan', 'like', "%{$search}%")
-              ->orWhere('lokasi', 'like', "%{$search}%")
-              ->orWhere('jenis_penyimpanan', 'like', "%{$search}%");
+                ->orWhere('lokasi', 'like', "%{$search}%")
+                ->orWhere('jenis_penyimpanan', 'like', "%{$search}%");
         });
     }
 
@@ -256,8 +263,8 @@ class Penyimpanan extends Model
         ];
     }
 
-   
-    
+
+
 
     /**
      * Options untuk status
@@ -303,7 +310,7 @@ class Penyimpanan extends Model
             'kapasitas_maksimal.min' => 'Kapasitas maksimal tidak boleh kurang dari 0.',
             'kapasitas_terpakai.numeric' => 'Kapasitas terpakai harus berupa angka.',
             'kapasitas_terpakai.min' => 'Kapasitas terpakai tidak boleh kurang dari 0.',
-           
+
             'kondisi.required' => 'Kondisi penyimpanan wajib dipilih.',
             'tanggal_pembuatan.required' => 'Tanggal pembuatan wajib diisi.',
             'tanggal_pembuatan.date' => 'Format tanggal tidak valid.',
