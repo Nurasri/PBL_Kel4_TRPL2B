@@ -63,18 +63,7 @@
                 </div>
             </div>
 
-            <!-- Tambahkan setelah statistics cards -->
-            <div class="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-3">
-                <!-- Existing cards... -->
-
-                <!-- Notification Widget -->
-                <div class="xl:col-span-1">
-                    @php
-                        $notifications = auth()->user()->notifications()->latest()->take(5)->get();
-                    @endphp
-                    <x-notification-widget :notifications="$notifications" />
-                </div>
-            </div>
+            
 
 
             <!-- Laporan Pending -->

@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use Illuminate\View\View;
 use App\Models\Perusahaan;
+use App\Models\Penyimpanan;
+use Illuminate\Http\Request;
 use App\Models\LaporanHarian;
 use App\Models\PengelolaanLimbah;
-use App\Models\LaporanHasilPengelolaan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 use App\Helpers\NotificationHelper;
-use App\Models\Penyimpanan;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
+use App\Models\LaporanHasilPengelolaan;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\ProfilPerusahaanRequest;
 
 class PerusahaanController extends Controller
 {
@@ -204,7 +205,7 @@ class PerusahaanController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('nama_perusahaan', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('telepon', 'like', "%{$search}%")
+                    ->orWhere('no_telp', 'like', "%{$search}%")
                     ->orWhere('no_registrasi', 'like', "%{$search}%")
                     ->orWhere('alamat', 'like', "%{$search}%");
             });
@@ -244,105 +245,100 @@ class PerusahaanController extends Controller
         return view('perusahaan.show', compact('perusahaan'));
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
+        // Only company users can create profiles
+        if (Auth::user()->isAdmin()) {
+            abort(403);
+        }
+
+        if (Auth::user()->perusahaan) {
+            return redirect()->route('perusahaan.dashboard')
+                ->with('error', 'Profil perusahaan sudah ada.');
+        }
         return view('perusahaan.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * Store a newly created company profile.
+     */
+    public function store(ProfilPerusahaanRequest $request): RedirectResponse
     {
-        $request->validate([
-            'nama_perusahaan' => 'required|string|max:255',
-            'jenis_usaha' => 'required|string|max:255',
-            'alamat' => 'required|string',
-            'telepon' => 'required|string|max:20',
-            'email' => 'required|email|max:255',
-            'no_registrasi' => 'required|string|max:100',
-            'deskripsi' => 'nullable|string',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
-
-        $logoPath = null;
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('logos', 'public');
+        // Only company users can create profiles
+        if (Auth::user()->isAdmin()) {
+            abort(403);
         }
 
-        $perusahaan = Perusahaan::create([
-            'user_id' => Auth::id(),
-            'nama_perusahaan' => $request->nama_perusahaan,
-            'jenis_usaha' => $request->jenis_usaha,
-            'alamat' => $request->alamat,
-            'telepon' => $request->telepon,
-            'email' => $request->email,
-            'no_registrasi' => $request->no_registrasi,
-            'deskripsi' => $request->deskripsi,
-            'logo' => $logoPath,
-        ]);
+        $validated = $request->validated();
 
-        NotificationHelper::perusahaanRegistered($perusahaan);
-        NotificationHelper::welcomeNewUser(auth()->user());
+        if ($request->hasFile('logo')) {
+            $validated['logo'] = $request->file('logo')->store('logo-perusahaan', 'public');
+        }
+
+        $validated['user_id'] = Auth::id();
+
+        Perusahaan::create($validated);
 
         return redirect()->route('perusahaan.dashboard')
-            ->with('success', 'Profil perusahaan berhasil dibuat.');
+            ->with('success', 'Profil perusahaan berhasil dibuat!');
     }
 
     public function edit(Perusahaan $perusahaan): View
     {
-        $user = Auth::user();
-
-        // Pastikan user hanya bisa edit perusahaan miliknya sendiri
-        if ($perusahaan->user_id !== $user->id) {
-            abort(403, 'Unauthorized access.');
+        // Only company users can edit their own profile
+        if (Auth::user()->isAdmin() || Auth::id() !== $perusahaan->user_id) {
+            abort(403);
         }
 
         return view('perusahaan.edit', compact('perusahaan'));
     }
 
-    public function update(Request $request, Perusahaan $perusahaan): RedirectResponse
+    /**
+     * Update the specified company profile.
+     */
+    public function update(ProfilPerusahaanRequest $request, Perusahaan $perusahaan): RedirectResponse
     {
-        $user = Auth::user();
-
-        // Pastikan user hanya bisa update perusahaan miliknya sendiri
-        if ($perusahaan->user_id !== $user->id) {
-            abort(403, 'Unauthorized access.');
+        // Only company users can update their own profile
+        if (Auth::user()->isAdmin() || Auth::id() !== $perusahaan->user_id) {
+            abort(403);
         }
 
-        $request->validate([
-            'nama_perusahaan' => 'required|string|max:255',
-            'jenis_usaha' => 'required|string|max:255',
-            'alamat' => 'required|string',
-            'telepon' => 'required|string|max:20',
-            'email' => 'required|email|max:255',
-            'no_registrasi' => 'required|string|max:100',
-            'deskripsi' => 'nullable|string',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
-
-        $updateData = $request->only([
-            'nama_perusahaan',
-            'jenis_usaha',
-            'alamat',
-            'telepon',
-            'email',
-            'no_registrasi',
-            'deskripsi'
-        ]);
+        $validated = $request->validated();
 
         if ($request->hasFile('logo')) {
-            // Hapus logo lama jika ada
+            // Delete old logo if exists
             if ($perusahaan->logo) {
                 Storage::disk('public')->delete($perusahaan->logo);
             }
-
-            $updateData['logo'] = $request->file('logo')->store('logos', 'public');
+            $validated['logo'] = $request->file('logo')->store('logo-perusahaan', 'public');
         }
 
-        $perusahaan->update($updateData);
-
+        $perusahaan->update($validated);
         NotificationHelper::perusahaanUpdated($perusahaan);
 
         return redirect()->route('perusahaan.dashboard')
-            ->with('success', 'Profil perusahaan berhasil diperbarui.');
+            ->with('success', 'Profil perusahaan berhasil diperbarui!');
+    }
+
+    /**
+     * Remove the specified company profile.
+     */
+    public function destroy(Perusahaan $perusahaan): RedirectResponse
+    {
+        // Only company users can delete their own profile
+        if (Auth::user()->isAdmin() || Auth::id() !== $perusahaan->user_id) {
+            abort(403);
+        }
+
+        // Delete logo if exists
+        if ($perusahaan->logo) {
+            Storage::disk('public')->delete($perusahaan->logo);
+        }
+
+        $perusahaan->delete();
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Profil perusahaan berhasil dihapus!');
     }
 
     public function adminIndex(): View

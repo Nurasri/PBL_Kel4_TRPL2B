@@ -232,38 +232,4 @@ Route::middleware('auth')->group(function () {
             return response()->json(['success' => true]);
         })->name('mark-all-read');
     });
-
 });
-
-// Route testing (hapus setelah testing)
-    Route::prefix('test-notifications')->middleware('auth')->group(function () {
-        Route::get('/perusahaan-registered', function () {
-            $perusahaan = auth()->user()->perusahaan;
-            \App\Helpers\NotificationHelper::perusahaanRegistered($perusahaan);
-            return back()->with('success', 'Test notification sent');
-        });
-
-        Route::get('/laporan-submitted', function () {
-            $laporan = \App\Models\LaporanHarian::first();
-            if ($laporan) {
-                \App\Helpers\NotificationHelper::laporanHarianSubmitted($laporan);
-            }
-            return back()->with('success', 'Test notification sent');
-        });
-
-        Route::get('/system-maintenance', function () {
-            \App\Helpers\NotificationHelper::systemMaintenance('Test maintenance notification');
-            return back()->with('success', 'Test notification sent');
-        });
-
-        Route::get('/all-types', function () {
-            $user = auth()->user();
-
-            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Success', 'This is a success notification', 'success');
-            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Info', 'This is an info notification', 'info');
-            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Warning', 'This is a warning notification', 'warning');
-            \App\Helpers\NotificationHelper::notifyUser($user, 'Test Danger', 'This is a danger notification', 'danger');
-
-            return back()->with('success', 'All test notifications sent');
-        });
-    });

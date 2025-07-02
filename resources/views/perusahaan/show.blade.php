@@ -39,7 +39,7 @@
                 </div>
                 <div>
                     <x-label>Telepon</x-label>
-                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->telepon }}</div>
+                    <div class="text-gray-700 dark:text-gray-200">{{ $perusahaan->no_telp }}</div>
                 </div>
                 <div>
                     <x-label>Email</x-label>
