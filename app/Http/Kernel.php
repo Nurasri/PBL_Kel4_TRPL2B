@@ -81,7 +81,31 @@ class Kernel extends HttpKernel
 
     protected function schedule(Schedule $schedule)
     {
-        // Cek notifikasi setiap hari jam 9 pagi
+        // Notifikasi utama
         $schedule->command('notifications:check')->dailyAt('09:00');
+        $schedule->command('notifications:periodic')->dailyAt('08:00');
+
+        // Reminder deadline
+        $schedule->command('deadline:remind')->dailyAt('10:00');
+
+        // Security check
+        $schedule->command('security:check')->weekly();
+
+        // Performance monitoring
+        $schedule->command('performance:monitor')->weekly();
+
+        // Cleanup notifikasi lama
+        $schedule->call(function () {
+            \App\Models\Notification::where('created_at', '<', now()->subMonths(3))->delete();
+        })->monthly();
+
+        // Backup reminder
+        $schedule->call(function () {
+            \App\Helpers\NotificationHelper::notifyAdmins(
+                'Reminder Backup',
+                'Jangan lupa untuk melakukan backup data sistem secara berkala',
+                'info'
+            );
+        })->weekly();
     }
 }

@@ -139,6 +139,13 @@
             </div>
         </div>
 
+        <div class="xl:col-span-1">
+        @php
+            $adminNotifications = auth()->user()->notifications()->latest()->take(5)->get();
+        @endphp
+        <x-notification-widget :notifications="$adminNotifications" />
+    </div>
+
         <!-- Charts Section -->
         <div class="grid gap-6 mb-8 md:grid-cols-2">
             <!-- Monthly Trends Chart -->

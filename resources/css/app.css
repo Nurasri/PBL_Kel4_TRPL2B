@@ -254,6 +254,10 @@
         @apply absolute z-10 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm tooltip-arrow dark:bg-gray-700;
     }
 
+    .tooltip-arrow {
+        @apply absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 transform rotate-45;
+    }
+
     /* File upload */
     .file-upload-area {
         @apply border-2 border-gray-300 border-dashed rounded-lg p-6 text-center hover:border-gray-400 transition-colors duration-150;

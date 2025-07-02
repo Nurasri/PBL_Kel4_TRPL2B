@@ -128,6 +128,9 @@ class PengelolaanLimbahController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (empty($request->vendor_id)) {
+            $request->merge(['vendor_id' => null]);
+        }
         $request->validate([
             'tanggal_mulai' => 'required|date|after_or_equal:today',
             'jenis_limbah_id' => 'required|exists:jenis_limbahs,id',
@@ -180,12 +183,14 @@ class PengelolaanLimbahController extends Controller
             // Generate nomor manifest otomatis
             $nomorManifest = $this->generateNomorManifest();
 
+            $vendorId = $request->jenis_pengelolaan === 'vendor_eksternal' ? $request->vendor_id : null;
+
             // Buat pengelolaan limbah
             $pengelolaan = new PengelolaanLimbah([
                 'perusahaan_id' => $user->perusahaan->id,
                 'jenis_limbah_id' => $request->jenis_limbah_id,
                 'penyimpanan_id' => $request->penyimpanan_id,
-                'vendor_id' => $request->vendor_id,
+                'vendor_id' => $vendorId,
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'jumlah_dikelola' => $request->jumlah_dikelola,
                 'satuan' => $jenisLimbah->satuan_default,

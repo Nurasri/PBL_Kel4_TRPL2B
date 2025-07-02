@@ -1,3 +1,5 @@
+<!-- Tambahkan di bagian head -->
+<script src="{{ asset('resources/js/notifications.js') }}" defer></script>
 <header class="z-10 py-4 bg-white shadow-md dark:bg-gray-800">
     <div class="container flex items-center justify-between h-full px-6 mx-auto text-green-600 dark:text-green-400">
         <!-- Mobile hamburger -->
@@ -58,66 +60,65 @@
 
             <!-- Notifications menu -->
             <li class="relative" x-data="{ open: false }">
-                <button @click="open = !open"
-                    class="relative align-middle rounded-md focus:outline-none focus:shadow-outline-purple">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z">
-                        </path>
-                    </svg>
-                    @if(auth()->user()->unread_notification_count > 0)
-                        <span
-                            class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {{ auth()->user()->unread_notification_count > 9 ? '9+' : auth()->user()->unread_notification_count }}
-                        </span>
-                    @endif
-                </button>
+                <div x-data="{ isNotificationMenuOpen: false }">
+                    <button class="relative align-middle rounded-md focus:outline-none focus:shadow-outline-green"
+                        @click="isNotificationMenuOpen = !isNotificationMenuOpen"
+                        @keydown.escape="isNotificationMenuOpen = false" aria-label="Notifications"
+                        aria-haspopup="true">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z">
+                            </path>
+                        </svg>
+                        @if(auth()->user()->unread_notification_count > 0)
+                            <span
+                                class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                {{ auth()->user()->unread_notification_count > 9 ? '9+' : auth()->user()->unread_notification_count }}
+                            </span>
+                        @endif
+                    </button>
 
-                <div x-show="open" @click.away="open = false"
-                    class="absolute right-0 w-80 mt-2 bg-white rounded-md shadow-lg dark:bg-gray-700 z-50">
-                    <div class="p-4 border-b">
-                        <h3 class="font-medium">Notifikasi</h3>
-                    </div>
 
-                    <div class="max-h-96 overflow-y-auto">
-                        @forelse(auth()->user()->notifications->take(5) as $notification)
-                            <div
-                                class="p-4 border-b hover:bg-gray-50 dark:hover:bg-gray-600 {{ !$notification->is_read ? 'bg-blue-50 dark:bg-blue-900' : '' }}">
-                                <div class="flex items-start">
-                                    <div
-                                        class="w-2 h-2 bg-{{ $notification->type_color }}-500 rounded-full mt-2 mr-3 {{ $notification->is_read ? 'opacity-30' : '' }}">
-                                    </div>
-                                    <div class="flex-1">
-                                        <h4 class="text-sm font-medium">{{ $notification->title }}</h4>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            {{ $notification->message }}</p>
-                                        <div class="flex items-center justify-between mt-2">
-                                            <span
-                                                class="text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</span>
-                                            @if($notification->action_url)
-                                                <a href="{{ $notification->action_url }}"
-                                                    class="text-xs text-blue-600 hover:underline">Lihat</a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
+                    <div x-show="isNotificationMenuOpen" x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95"
+                        @click.away="isNotificationMenuOpen = false" @keydown.escape="isNotificationMenuOpen = false"
+                        class="absolute right-0 z-50 w-80 mt-2 bg-white border border-gray-100 rounded-md shadow-lg dark:border-gray-700 dark:bg-gray-700"
+                        style="display: none;" x-cloak>
+
+                        <!-- Header -->
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-600">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Notifikasi</h3>
+                                @if(auth()->user()->unread_notification_count > 0)
+                                    <button onclick="markAllAsRead()"
+                                        class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                        Tandai Semua Dibaca
+                                    </button>
+                                @endif
                             </div>
-                        @empty
-                            <div class="p-8 text-center text-gray-500">
-                                Tidak ada notifikasi
-                            </div>
-                        @endforelse
-                    </div>
+                        </div>
 
-                    @if(auth()->user()->notifications->count() > 0)
-                        <div class="p-4 border-t text-center">
-                            <a href="{{ route('notifications.index') }}" class="text-sm text-blue-600 hover:underline">
-                                Lihat Semua
+                        <!-- Notifications list -->
+                        <div id="notification-dropdown" class="max-h-96 overflow-y-auto">
+                            <!-- Content will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-600">
+                            <a href="{{ route('notifications.index') }}"
+                                class="block text-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                Lihat Semua Notifikasi
                             </a>
                         </div>
-                    @endif
+                    </div>
                 </div>
             </li>
+
+
 
             <!-- Profile menu -->
             <li class="relative" x-data="{ isProfileMenuOpen: false }">
