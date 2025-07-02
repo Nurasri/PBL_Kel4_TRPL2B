@@ -544,7 +544,7 @@ class LaporanHasilPengelolaanController extends Controller
             return response()->json([]);
         }
         
-        $pengelolaanLimbahs = PengelolaanLimbah::with(['jenisLimbah', 'penyimpanan'])
+        $pengelolaanLimbah = PengelolaanLimbah::with(['jenisLimbah', 'penyimpanan'])
             ->where('perusahaan_id', $user->perusahaan->id)
             ->where('status', 'selesai')
             ->whereDoesntHave('laporanHasilPengelolaan')
@@ -561,7 +561,7 @@ class LaporanHasilPengelolaanController extends Controller
                 ];
             });
 
-        return response()->json($pengelolaanLimbahs);
+        return response()->json($pengelolaanLimbah);
     }
 
     /**
