@@ -5,15 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\LaporanHarian;
 use App\Models\JenisLimbah;
 use App\Models\Penyimpanan;
+use App\Services\LaporanHarianService;
+use App\Traits\HasBulkActions;
+use App\Traits\HasExport;
+use App\Traits\HasFilters;
+use App\Http\Requests\StoreLaporanHarianRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Helpers\NotificationHelper;
 
 class LaporanHarianController extends Controller
 {
+    use HasBulkActions, HasExport, HasFilters;
+
+    protected $laporanService;
+
+    public function __construct(LaporanHarianService $laporanService)
+    {
+        $this->laporanService = $laporanService;
+    }
+
     /**
      * Display a listing of laporan harian
      */
@@ -22,93 +34,39 @@ class LaporanHarianController extends Controller
         $user = Auth::user();
         $query = LaporanHarian::with(['jenisLimbah', 'penyimpanan', 'perusahaan']);
 
-        // Filter berdasarkan role
+        // Filter by company for non-admin users
         if ($user->isPerusahaan()) {
             $query->where('perusahaan_id', $user->perusahaan->id);
         }
-        // Admin bisa melihat semua laporan
 
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('jenisLimbah', function ($subQ) use ($search) {
-                    $subQ->where('nama', 'like', "%{$search}%")
-                        ->orWhere('kode_limbah', 'like', "%{$search}%");
-                })
-                    ->orWhereHas('penyimpanan', function ($subQ) use ($search) {
-                        $subQ->where('nama_penyimpanan', 'like', "%{$search}%");
-                    })
-                    ->orWhere('keterangan', 'like', "%{$search}%");
+        // Apply filters
+        $filters = [
+            'search' => ['jenisLimbah.nama', 'jenisLimbah.kode_limbah', 'penyimpanan.nama_penyimpanan', 'keterangan'],
+            'date_field' => 'tanggal',
+            'status_field' => 'status'
+        ];
 
-                // Untuk admin, tambahkan pencarian berdasarkan nama perusahaan
-                if ($user->isAdmin()) {
-                    $q->orWhereHas('perusahaan', function ($subQ) use ($search) {
-                        $subQ->where('nama_perusahaan', 'like', "%{$search}%");
-                    });
-                }
-            });
+        if ($user->isAdmin()) {
+            $filters['search'][] = 'perusahaan.nama_perusahaan';
         }
 
-        // Filter by perusahaan (hanya untuk admin)
-        if ($user->isAdmin() && $request->filled('perusahaan_id')) {
-            $query->where('perusahaan_id', $request->perusahaan_id);
-        }
+        $query = $this->applyFilters($query, $request, $filters);
 
-        // Filter by jenis limbah
+        // Additional filters
         if ($request->filled('jenis_limbah_id')) {
             $query->where('jenis_limbah_id', $request->jenis_limbah_id);
         }
 
-        // Filter by penyimpanan
         if ($request->filled('penyimpanan_id')) {
             $query->where('penyimpanan_id', $request->penyimpanan_id);
         }
 
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Filter by date range
-        if ($request->filled('tanggal_dari')) {
-            $query->where('tanggal', '>=', $request->tanggal_dari);
-        }
-        if ($request->filled('tanggal_sampai')) {
-            $query->where('tanggal', '<=', $request->tanggal_sampai);
-        }
-
         $laporan = $query->latest('tanggal')->paginate(15)->withQueryString();
 
-        // Data untuk filter
-        $jenisLimbahOptions = JenisLimbah::pluck('nama', 'id');
-        $statusOptions = LaporanHarian::getStatusOptions();
+        // Filter options
+        $filterOptions = $this->getFilterOptions($user);
 
-        // Untuk admin, tambahkan filter perusahaan
-        $perusahaanOptions = [];
-        if ($user->isAdmin()) {
-            $perusahaanOptions = \App\Models\Perusahaan::orderBy('nama_perusahaan')->pluck('nama_perusahaan', 'id');
-        }
-
-        // Penyimpanan options berdasarkan role
-        if ($user->isPerusahaan()) {
-            $penyimpananOptions = Penyimpanan::where('perusahaan_id', $user->perusahaan->id)
-                ->pluck('nama_penyimpanan', 'id');
-        } else {
-            $penyimpananOptions = Penyimpanan::with('perusahaan')
-                ->get()
-                ->mapWithKeys(function ($item) {
-                    return [$item->id => $item->nama_penyimpanan . ' (' . $item->perusahaan->nama_perusahaan . ')'];
-                });
-        }
-
-        return view('laporan-harian.index', compact(
-            'laporan',
-            'jenisLimbahOptions',
-            'penyimpananOptions',
-            'statusOptions',
-            'perusahaanOptions'
-        ));
+        return view('laporan-harian.index', compact('laporan') + $filterOptions);
     }
 
     /**
@@ -141,83 +99,37 @@ class LaporanHarianController extends Controller
     /**
      * Store a newly created laporan
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreLaporanHarianRequest $request): RedirectResponse
     {
         $user = Auth::user();
 
-        // Hanya perusahaan yang bisa create
         if (!$user->isPerusahaan()) {
             abort(403, 'Hanya perusahaan yang dapat membuat laporan harian.');
         }
 
-        $request->validate([
-            'tanggal' => 'required|date|before_or_equal:today',
-            'jenis_limbah_id' => 'required|exists:jenis_limbahs,id',
-            'penyimpanan_id' => 'required|exists:penyimpanans,id',
-            'jumlah' => 'required|numeric|min:0.01',
-            'satuan' => 'required|string|max:50',
-            'keterangan' => 'nullable|string|max:1000',
-        ], [
-            'tanggal.required' => 'Tanggal laporan wajib diisi.',
-            'tanggal.before_or_equal' => 'Tanggal laporan tidak boleh lebih dari hari ini.',
-            'jenis_limbah_id.required' => 'Jenis limbah wajib dipilih.',
-            'penyimpanan_id.required' => 'Penyimpanan wajib dipilih.',
-            'jumlah.required' => 'Jumlah limbah wajib diisi.',
-            'jumlah.min' => 'Jumlah limbah harus lebih dari 0.',
-            'satuan.required' => 'Satuan wajib diisi.',
-        ]);
         try {
-            DB::beginTransaction();
-            // Validasi penyimpanan milik perusahaan
-            $penyimpanan = Penyimpanan::where('id', $request->penyimpanan_id)
-                ->where('perusahaan_id', $user->perusahaan->id)
-                ->where('jenis_limbah_id', $request->jenis_limbah_id)
-                ->where('status', 'aktif')
-                ->first();
-            if (!$penyimpanan) {
-                return back()->withErrors(['penyimpanan_id' => 'Penyimpanan tidak valid atau tidak sesuai dengan jenis limbah.']);
+            $validated = $request->validated();
+            
+            // Tentukan status berdasarkan action yang dipilih
+            $status = 'draft'; // default
+            if ($request->has('action')) {
+                $status = $request->action === 'submit' ? 'submitted' : 'draft';
+            } elseif ($request->has('submit')) {
+                $status = 'submitted';
             }
-            // Cek kapasitas penyimpanan
-            $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
-            if ($request->jumlah > $sisaKapasitas) {
-                return back()->withErrors([
-                    'jumlah' => 'Jumlah melebihi sisa kapasitas penyimpanan. Sisa kapasitas: ' .
-                        number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->satuan
-                ]);
-            }
-            // Buat laporan harian
-            $laporanHarian = LaporanHarian::create([
-                'perusahaan_id' => $user->perusahaan->id,
-                'tanggal' => $request->tanggal,
-                'jenis_limbah_id' => $request->jenis_limbah_id,
-                'penyimpanan_id' => $request->penyimpanan_id,
-                'jumlah' => $request->jumlah,
-                'satuan' => $request->satuan,
-                'keterangan' => $request->keterangan,
-                'status' => $request->has('submit') ? 'submitted' : 'draft',
-                'tanggal_laporan' => now(),
-            ]);
+            
+            $validated['status'] = $status;
+            
+            $laporan = $this->laporanService->create($validated, $user->perusahaan->id);
 
-            // Update kapasitas penyimpanan jika laporan di-submit
-            if ($request->has('submit')) {
-                $penyimpanan->increment('kapasitas_terpakai', $request->jumlah);
-                // Cek apakah kapasitas penyimpanan sudah penuh
-                $percentage = ($penyimpanan->kapasitas_terpakai / $penyimpanan->kapasitas_maksimal) * 100;
-                if ($percentage >= 90) {
-                    NotificationHelper::penyimpananFull($penyimpanan);
-                }
-            }
-
-            DB::commit();
-
-            $message = $request->has('submit') ?
+            $message = $status === 'submitted' ?
                 'Laporan harian berhasil dibuat dan disubmit.' :
                 'Laporan harian berhasil disimpan sebagai draft.';
 
             return redirect()->route('laporan-harian.index')->with('success', $message);
+
         } catch (\Exception $e) {
-            DB::rollback();
-            return back()->withErrors(['error' => 'Gagal menyimpan laporan: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
 
@@ -275,80 +187,42 @@ class LaporanHarianController extends Controller
     /**
      * Update the specified laporan
      */
-    public function update(Request $request, LaporanHarian $laporanHarian): RedirectResponse
+    public function update(StoreLaporanHarianRequest $request, LaporanHarian $laporanHarian): RedirectResponse
     {
         $user = Auth::user();
 
-        // Hanya perusahaan pemilik yang bisa update
         if (!$user->isPerusahaan() || $laporanHarian->perusahaan_id !== $user->perusahaan->id) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit laporan ini.');
         }
 
-        // Hanya draft yang bisa diedit
         if ($laporanHarian->status !== 'draft') {
             return redirect()->route('laporan-harian.show', $laporanHarian)
                 ->with('error', 'Hanya laporan dengan status draft yang dapat diedit.');
         }
 
-        $request->validate([
-            'tanggal' => 'required|date|before_or_equal:today',
-            'jenis_limbah_id' => 'required|exists:jenis_limbahs,id',
-            'penyimpanan_id' => 'required|exists:penyimpanans,id',
-            'jumlah' => 'required|numeric|min:0.01',
-            'satuan' => 'required|string|max:50',
-            'keterangan' => 'nullable|string|max:1000',
-        ]);
-
         try {
-            DB::beginTransaction();
-
-            // Validasi penyimpanan milik perusahaan
-            $penyimpanan = Penyimpanan::where('id', $request->penyimpanan_id)
-                ->where('perusahaan_id', $user->perusahaan->id)
-                ->where('jenis_limbah_id', $request->jenis_limbah_id)
-                ->where('status', 'aktif')
-                ->first();
-
-            if (!$penyimpanan) {
-                return back()->withErrors(['penyimpanan_id' => 'Penyimpanan tidak valid atau tidak sesuai dengan jenis limbah.']);
+            $validated = $request->validated();
+            
+            // Tentukan status berdasarkan action yang dipilih
+            $status = 'draft'; // default
+            if ($request->has('action')) {
+                $status = $request->action === 'submit' ? 'submitted' : 'draft';
+            } elseif ($request->has('submit')) {
+                $status = 'submitted';
             }
+            
+            $validated['status'] = $status;
+            
+            $this->laporanService->update($laporanHarian, $validated);
 
-            // Cek kapasitas penyimpanan (exclude current record)
-            $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
-            if ($request->jumlah > $sisaKapasitas) {
-                return back()->withErrors([
-                    'jumlah' => 'Jumlah melebihi sisa kapasitas penyimpanan. Sisa kapasitas: ' .
-                        number_format($sisaKapasitas, 2) . ' ' . $penyimpanan->satuan
-                ]);
-            }
-
-            // Update laporan harian
-            $laporanHarian->update([
-                'tanggal' => $request->tanggal,
-                'jenis_limbah_id' => $request->jenis_limbah_id,
-                'penyimpanan_id' => $request->penyimpanan_id,
-                'jumlah' => $request->jumlah,
-                'satuan' => $request->satuan,
-                'keterangan' => $request->keterangan,
-                'status' => $request->has('submit') ? 'submitted' : 'draft',
-                'tanggal_laporan' => now(),
-            ]);
-
-            // Update kapasitas penyimpanan jika laporan di-submit
-            if ($request->has('submit')) {
-                $penyimpanan->increment('kapasitas_terpakai', $request->jumlah);
-            }
-
-            DB::commit();
-
-            $message = $request->has('submit') ?
+            $message = $status === 'submitted' ?
                 'Laporan harian berhasil diperbarui dan disubmit.' :
                 'Laporan harian berhasil diperbarui.';
 
             return redirect()->route('laporan-harian.index')->with('success', $message);
+
         } catch (\Exception $e) {
-            DB::rollback();
-            return back()->withErrors(['error' => 'Gagal memperbarui laporan: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
 
@@ -381,47 +255,183 @@ class LaporanHarianController extends Controller
     }
 
     /**
-     * Submit laporan (change status from draft to submitted)
+     * Submit laporan
      */
     public function submit(LaporanHarian $laporanHarian): RedirectResponse
     {
         $user = Auth::user();
 
-        // Pastikan user hanya bisa submit laporan milik perusahaannya
         if ($laporanHarian->perusahaan_id !== $user->perusahaan->id) {
             abort(403, 'Unauthorized access.');
         }
 
-        if (!$laporanHarian->canSubmit()) {
-            return redirect()->route('laporan-harian.show', $laporanHarian)
-                ->with('error', 'Laporan tidak dapat disubmit.');
-        }
-
         try {
-            DB::beginTransaction();
-
-            // Validasi kapasitas penyimpanan
-            if (!$laporanHarian->penyimpanan->canAccommodate($laporanHarian->jumlah)) {
-                return back()->with(
-                    'error',
-                    'Kapasitas penyimpanan tidak mencukupi. Sisa kapasitas: ' .
-                        number_format($laporanHarian->penyimpanan->sisa_kapasitas, 2) . ' ' .
-                        $laporanHarian->penyimpanan->satuan
-                );
-            }
-
-            $laporanHarian->submit();
-
-            NotificationHelper::laporanHarianSubmitted($laporanHarian);
-
-            DB::commit();
-
+            $this->laporanService->submit($laporanHarian);
             return redirect()->route('laporan-harian.index')
                 ->with('success', 'Laporan berhasil disubmit.');
         } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Gagal submit laporan: ' . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Handle bulk actions
+     */
+    public function bulkAction(Request $request)
+    {
+        return $this->handleBulkAction($request, LaporanHarian::class, ['delete', 'submit']);
+    }
+
+    /**
+     * Execute bulk action for specific item
+     */
+    protected function executeBulkAction($action, $item)
+    {
+        switch ($action) {
+            case 'delete':
+                if ($item->canDelete()) {
+                    $item->delete();
+                } else {
+                    throw new \Exception('Item tidak dapat dihapus');
+                }
+                break;
+            case 'submit':
+                if ($item->canSubmit()) {
+                    $this->laporanService->submit($item);
+                } else {
+                    throw new \Exception('Item tidak dapat disubmit');
+                }
+                break;
+        }
+    }
+
+    /**
+     * Export laporan to PDF
+     */
+    public function export(Request $request)
+    {
+        $user = Auth::user();
+        $query = LaporanHarian::with(['jenisLimbah', 'penyimpanan', 'perusahaan']);
+
+        // Filter by company for non-admin users
+        if ($user->isPerusahaan()) {
+            $query->where('perusahaan_id', $user->perusahaan->id);
+        }
+
+        // Apply same filters as index
+        $filters = [
+            'date_field' => 'tanggal',
+            'status_field' => 'status'
+        ];
+        $query = $this->applyFilters($query, $request, $filters);
+
+        // Additional filters
+        if ($request->filled('jenis_limbah_id')) {
+            $query->where('jenis_limbah_id', $request->jenis_limbah_id);
+        }
+
+        if ($request->filled('penyimpanan_id')) {
+            $query->where('penyimpanan_id', $request->penyimpanan_id);
+        }
+
+        $laporan = $query->latest('tanggal')->get();
+
+        // Generate period text
+        $period = $this->generatePeriodText($request);
+
+        $filename = 'laporan-harian-' . now()->format('Y-m-d-H-i-s') . '.pdf';
+
+        return $this->exportToPdf(
+            $laporan, 
+            'exports.laporan-harian-pdf', 
+            $filename,
+            ['period' => $period]
+        );
+    }
+
+    /**
+     * Export laporan to CSV (tetap tersedia sebagai alternatif)
+     */
+    public function exportCsv(Request $request)
+    {
+        $user = Auth::user();
+        $query = LaporanHarian::with(['jenisLimbah', 'penyimpanan']);
+
+        if ($user->isPerusahaan()) {
+            $query->where('perusahaan_id', $user->perusahaan->id);
+        }
+
+        // Apply same filters as index
+        $filters = [
+            'date_field' => 'tanggal',
+            'status_field' => 'status'
+        ];
+        $query = $this->applyFilters($query, $request, $filters);
+
+        $laporan = $query->latest('tanggal')->get();
+
+        $headers = [
+            'Tanggal', 'Jenis Limbah', 'Kode Limbah', 'Penyimpanan', 
+            'Lokasi', 'Jumlah', 'Satuan', 'Status', 'Keterangan', 'Tanggal Laporan'
+        ];
+
+        if ($user->isAdmin()) {
+            array_splice($headers, 1, 0, 'Perusahaan');
+        }
+
+        $filename = 'laporan-harian-' . now()->format('Y-m-d') . '.csv';
+
+        return $this->exportToCsv($laporan, $headers, $filename);
+    }
+
+    /**
+     * Generate period text for PDF
+     */
+    private function generatePeriodText($request)
+    {
+        $period = '';
+        
+        if ($request->filled('tanggal_dari') && $request->filled('tanggal_sampai')) {
+            $dari = \Carbon\Carbon::parse($request->tanggal_dari)->format('d F Y');
+            $sampai = \Carbon\Carbon::parse($request->tanggal_sampai)->format('d F Y');
+            $period = "{$dari} - {$sampai}";
+        } elseif ($request->filled('tanggal_dari')) {
+            $dari = \Carbon\Carbon::parse($request->tanggal_dari)->format('d F Y');
+            $period = "Mulai {$dari}";
+        } elseif ($request->filled('tanggal_sampai')) {
+            $sampai = \Carbon\Carbon::parse($request->tanggal_sampai)->format('d F Y');
+            $period = "Sampai {$sampai}";
+        } else {
+            $period = "Semua Data";
+        }
+
+        return $period;
+    }
+
+    /**
+     * Format row for CSV export (tetap diperlukan untuk trait)
+     */
+    protected function formatRowForCsv($item)
+    {
+        $row = [
+            $item->tanggal->format('d/m/Y'),
+            $item->jenisLimbah->nama,
+            $item->jenisLimbah->kode_limbah,
+            $item->penyimpanan->nama_penyimpanan,
+            $item->penyimpanan->lokasi,
+            $item->jumlah,
+            $item->satuan,
+            $item->status === 'draft' ? 'Draft' : 'Submitted',
+            $item->keterangan ?: '-',
+            $item->created_at->format('d/m/Y H:i')
+        ];
+
+        // Add company name for admin
+        if (auth()->user()->isAdmin()) {
+            array_splice($row, 1, 0, $item->perusahaan->nama_perusahaan);
+        }
+
+        return $row;
     }
 
     /**
@@ -439,16 +449,12 @@ class LaporanHarianController extends Controller
 
             $perusahaanId = $user->perusahaan->id;
 
-            // Menggunakan Eloquent dengan relationship
             $penyimpanans = Penyimpanan::with('jenisLimbah')
                 ->where('perusahaan_id', $perusahaanId)
                 ->where('jenis_limbah_id', $jenisLimbahId)
                 ->where('status', 'aktif')
                 ->get();
 
-            \Log::info('Found penyimpanans: ' . $penyimpanans->count());
-
-            // Transform data
             $result = $penyimpanans->map(function ($penyimpanan) {
                 $sisaKapasitas = $penyimpanan->kapasitas_maksimal - $penyimpanan->kapasitas_terpakai;
                 $persentaseKapasitas = $penyimpanan->kapasitas_maksimal > 0 ?
@@ -461,7 +467,7 @@ class LaporanHarianController extends Controller
                     'kapasitas_maksimal' => (float) $penyimpanan->kapasitas_maksimal,
                     'kapasitas_terpakai' => (float) $penyimpanan->kapasitas_terpakai,
                     'sisa_kapasitas' => (float) $sisaKapasitas,
-                    'satuan' => $penyimpanan->jenisLimbah->satuan_default, // Ambil dari jenis limbah
+                    'satuan' => $penyimpanan->jenisLimbah->satuan_default,
                     'persentase_kapasitas' => round($persentaseKapasitas, 1),
                     'can_accommodate' => $sisaKapasitas > 0
                 ];
@@ -470,13 +476,12 @@ class LaporanHarianController extends Controller
             return response()->json($result);
         } catch (\Exception $e) {
             \Log::error('Error in getPenyimpananByJenisLimbah: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-
             return response()->json([
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
     }
+
     /**
      * Get jenis limbah info (AJAX)
      */
@@ -516,28 +521,28 @@ class LaporanHarianController extends Controller
         $endDate = $request->get('end_date', now()->endOfMonth());
 
         $statistics = [
-            'total_laporan' => LaporanHarian::byPerusahaan($perusahaanId)
-                ->byDateRange($startDate, $endDate)
+            'total_laporan' => LaporanHarian::where('perusahaan_id', $perusahaanId)
+                ->whereBetween('tanggal', [$startDate, $endDate])
                 ->count(),
 
-            'laporan_draft' => LaporanHarian::byPerusahaan($perusahaanId)
-                ->byStatus('draft')
-                ->byDateRange($startDate, $endDate)
+            'laporan_draft' => LaporanHarian::where('perusahaan_id', $perusahaanId)
+                ->where('status', 'draft')
+                ->whereBetween('tanggal', [$startDate, $endDate])
                 ->count(),
 
-            'laporan_submitted' => LaporanHarian::byPerusahaan($perusahaanId)
-                ->byStatus('submitted')
-                ->byDateRange($startDate, $endDate)
+            'laporan_submitted' => LaporanHarian::where('perusahaan_id', $perusahaanId)
+                ->where('status', 'submitted')
+                ->whereBetween('tanggal', [$startDate, $endDate])
                 ->count(),
 
-            'total_limbah' => LaporanHarian::byPerusahaan($perusahaanId)
-                ->byStatus('submitted')
-                ->byDateRange($startDate, $endDate)
+            'total_limbah' => LaporanHarian::where('perusahaan_id', $perusahaanId)
+                ->where('status', 'submitted')
+                ->whereBetween('tanggal', [$startDate, $endDate])
                 ->sum('jumlah'),
 
-            'jenis_limbah_terbanyak' => LaporanHarian::byPerusahaan($perusahaanId)
-                ->byStatus('submitted')
-                ->byDateRange($startDate, $endDate)
+            'jenis_limbah_terbanyak' => LaporanHarian::where('perusahaan_id', $perusahaanId)
+                ->where('status', 'submitted')
+                ->whereBetween('tanggal', [$startDate, $endDate])
                 ->with('jenisLimbah')
                 ->get()
                 ->groupBy('jenis_limbah_id')
@@ -557,149 +562,31 @@ class LaporanHarianController extends Controller
     }
 
     /**
-     * Export laporan to Excel/CSV
+     * Get filter options for view
      */
-    public function export(Request $request)
+    private function getFilterOptions($user)
     {
-        $user = Auth::user();
-        $query = LaporanHarian::with(['jenisLimbah', 'penyimpanan'])
-            ->byPerusahaan($user->perusahaan->id);
+        $jenisLimbahOptions = JenisLimbah::pluck('nama', 'id');
+        $statusOptions = LaporanHarian::getStatusOptions();
 
-        // Apply same filters as index
-        if ($request->filled('jenis_limbah_id')) {
-            $query->byJenisLimbah($request->jenis_limbah_id);
+        $perusahaanOptions = [];
+        if ($user->isAdmin()) {
+            $perusahaanOptions = \App\Models\Perusahaan::orderBy('nama_perusahaan')->pluck('nama_perusahaan', 'id');
         }
 
-        if ($request->filled('penyimpanan_id')) {
-            $query->byPenyimpanan($request->penyimpanan_id);
+        $penyimpananOptions = [];
+        if ($user->isPerusahaan()) {
+            $penyimpananOptions = Penyimpanan::where('perusahaan_id', $user->perusahaan->id)
+                ->pluck('nama_penyimpanan', 'id');
+        } else {
+            $penyimpananOptions = Penyimpanan::with('perusahaan')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    return [$item->id => $item->nama_penyimpanan . ' (' . $item->perusahaan->nama_perusahaan . ')'];
+                });
         }
 
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
-
-        if ($request->filled('tanggal_dari')) {
-            $query->where('tanggal', '>=', $request->tanggal_dari);
-        }
-
-        if ($request->filled('tanggal_sampai')) {
-            $query->where('tanggal', '<=', $request->tanggal_sampai);
-        }
-
-        $laporan = $query->latest('tanggal')->get();
-
-        // Simple CSV export
-        $filename = 'laporan-harian-' . now()->format('Y-m-d') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function () use ($laporan) {
-            $file = fopen('php://output', 'w');
-
-            // Header CSV
-            fputcsv($file, [
-                'Tanggal',
-                'Jenis Limbah',
-                'Kode Limbah',
-                'Penyimpanan',
-                'Lokasi',
-                'Jumlah',
-                'Satuan',
-                'Status',
-                'Keterangan',
-                'Tanggal Laporan'
-            ]);
-
-            // Data CSV
-            foreach ($laporan as $item) {
-                fputcsv($file, [
-                    $item->tanggal->format('d/m/Y'),
-                    $item->jenisLimbah->nama,
-                    $item->jenisLimbah->kode_limbah,
-                    $item->penyimpanan->nama_penyimpanan,
-                    $item->penyimpanan->lokasi,
-                    $item->jumlah,
-                    $item->satuan,
-                    $item->status_name,
-                    $item->keterangan,
-                    $item->create_at->format('d/m/Y H:i')
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
-    }
-
-    /**
-     * Bulk actions for multiple laporan
-     */
-    public function bulkAction(Request $request)
-    {
-        $request->validate([
-            'action' => 'required|in:delete,submit',
-            'laporan_ids' => 'required|array',
-            'laporan_ids.*' => 'exists:laporan_harians,id'
-        ]);
-
-        $user = Auth::user();
-        $laporanIds = $request->laporan_ids;
-
-        // Pastikan semua laporan milik perusahaan user
-        $laporan = LaporanHarian::whereIn('id', $laporanIds)
-            ->where('perusahaan_id', $user->perusahaan->id)
-            ->get();
-
-        if ($laporan->count() !== count($laporanIds)) {
-            return back()->with('error', 'Beberapa laporan tidak valid atau bukan milik perusahaan Anda.');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $successCount = 0;
-            $errorCount = 0;
-
-            foreach ($laporan as $item) {
-                try {
-                    if ($request->action === 'delete') {
-                        if ($item->canDelete()) {
-                            $item->delete();
-                            $successCount++;
-                        } else {
-                            $errorCount++;
-                        }
-                    } elseif ($request->action === 'submit') {
-                        if ($item->canSubmit()) {
-                            $item->submit();
-                            $successCount++;
-                        } else {
-                            $errorCount++;
-                        }
-                    }
-                } catch (\Exception $e) {
-                    $errorCount++;
-                    \Log::error('Bulk action error: ' . $e->getMessage());
-                }
-            }
-
-            DB::commit();
-
-            $actionName = $request->action === 'delete' ? 'dihapus' : 'disubmit';
-            $message = "{$successCount} laporan berhasil {$actionName}.";
-
-            if ($errorCount > 0) {
-                $message .= " {$errorCount} laporan gagal diproses.";
-            }
-
-            return redirect()->route('laporan-harian.index')->with('success', $message);
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Gagal melakukan aksi bulk: ' . $e->getMessage());
-        }
+        return compact('jenisLimbahOptions', 'penyimpananOptions', 'statusOptions', 'perusahaanOptions');
     }
 }
+

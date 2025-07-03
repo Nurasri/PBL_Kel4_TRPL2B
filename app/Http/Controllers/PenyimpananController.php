@@ -146,7 +146,7 @@ class PenyimpananController extends Controller
             $penyimpanan->perusahaan_id = auth()->user()->perusahaan->id;
             $penyimpanan->save();
 
-            NotificationHelper::penyimpananCreated($penyimpanan);
+          
 
             return redirect()->route('penyimpanan.index')
                 ->with('success', 'Penyimpanan berhasil ditambahkan.');

@@ -184,7 +184,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');
     Route::get('/laporan-harian/{laporanHarian}', [LaporanHarianController::class, 'show'])->name('laporan-harian.show');
-    Route::get('/laporan-harian/export/csv', [LaporanHarianController::class, 'export'])->name('laporan-harian.export');
+    // Update route untuk export
+    Route::get('/laporan-harian/export/pdf', [LaporanHarianController::class, 'export'])->name('laporan-harian.export');
+    Route::get('/laporan-harian/export/csv', [LaporanHarianController::class, 'exportCsv'])->name('laporan-harian.export-csv');
 
 
 

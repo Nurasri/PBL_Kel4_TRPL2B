@@ -29,7 +29,8 @@
                         <x-form-group label="Tanggal Laporan" name="tanggal" required>
                             <x-input type="date" id="tanggal" name="tanggal" value="{{ old('tanggal', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required />
                         </x-form-group>
-                        <!-- Jenis Limbah - Ganti dengan HTML biasa -->
+                        
+                        <!-- Jenis Limbah -->
                         <div class="mb-4">
                             <label for="jenis_limbah_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Jenis Limbah <span class="text-red-500">*</span>
@@ -46,7 +47,8 @@
                                 @endforeach
                             </select>
                         </div>
-                        <!-- Penyimpanan - Ganti dengan HTML biasa -->
+                        
+                        <!-- Penyimpanan -->
                         <div class="mb-4">
                             <label for="penyimpanan_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Penyimpanan <span class="text-red-500">*</span>
@@ -55,10 +57,6 @@
                                     class="block w-full mt-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-green-400 focus:ring focus:ring-green-400 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:focus:border-green-400 dark:focus:ring-green-400">
                                 <option value="">Pilih jenis limbah terlebih dahulu</option>
                             </select>
-                            <!-- Debug info -->
-                            <div id="debug-info" class="mt-1 text-xs text-gray-500">
-                                Status: <span id="debug-status">Menunggu pilihan jenis limbah...</span>
-                            </div>
                             
                             <div id="penyimpanan-info" class="hidden mt-2 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
                                 <div class="text-sm text-blue-700 dark:text-blue-300">
@@ -76,13 +74,14 @@
                                 </div>
                             </div>
                         </div>
+                        
                         <div class="grid grid-cols-2 gap-4">
                             <x-form-group label="Jumlah" name="jumlah" required>
                                 <x-input type="number" id="jumlah" name="jumlah" step="0.01" min="0.01" 
                                          value="{{ old('jumlah') }}" placeholder="0.00" required />
                             </x-form-group>
 
-                            <!-- Satuan - Ganti dengan HTML biasa -->
+                            <!-- Satuan -->
                             <div class="mb-4">
                                 <label for="satuan_display" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Satuan
@@ -127,12 +126,14 @@
                     <x-button variant="secondary" href="{{ route('laporan-harian.index') }}">
                         Batal
                     </x-button>
-                    <x-button type="submit" name="status" value="draft">
+                    <button type="submit" name="action" value="draft"
+                            class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-gray-600 border border-transparent rounded-lg active:bg-gray-600 hover:bg-gray-700 focus:outline-none focus:shadow-outline-gray">
                         Simpan Draft
-                    </x-button>
-                    <x-button type="submit" name="status" value="submitted" id="submit-btn">
+                    </button>
+                    <button type="submit" name="action" value="submit" id="submit-btn"
+                            class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-green-600 border border-transparent rounded-lg active:bg-green-600 hover:bg-green-700 focus:outline-none focus:shadow-outline-green">
                         Submit Laporan
-                    </x-button>
+                    </button>
                 </div>
             </form>
         </x-card>
