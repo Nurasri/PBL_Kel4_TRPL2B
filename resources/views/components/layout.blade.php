@@ -20,11 +20,14 @@
         .service-card:hover {
             transform: translateY(-5px);
         }
+
+        * {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 
 <body class="bg-white text-gray-900">
-    <x-navbar></x-navbar>
 
     {{ $slot }}
 
@@ -32,7 +35,9 @@
     <footer class="bg-[#063C2E] text-white py-12">
         <div class="container mx-auto px-4 grid grid-cols-3 gap-8">
             <div>
-                <img src="/images/logo2.png" alt="NAIMA Sustainability" class="h-8 mb-4">
+                <a href="/" class="inline-block">
+                    <img src="/images/logo2.png" alt="NAIMA Sustainability" class="h-8 mb-4 hover:opacity-80 transition-opacity cursor-pointer">
+                </a>
                 <p class="text-sm">Kami hadir untuk yang telah atau akan menerapkan pengelolaan perusahaan saat
                     memulai, ingin memperbaiki, hingga ingin mencapai level yang lebih tinggi dalam aspek keberlanjutan.
                 </p>
