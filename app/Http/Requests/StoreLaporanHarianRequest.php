@@ -8,7 +8,7 @@ class StoreLaporanHarianRequest extends FormRequest
 {
     public function authorize()
     {
-        return auth()->user()->isPerusahaan();
+        return true;
     }
 
     public function rules()

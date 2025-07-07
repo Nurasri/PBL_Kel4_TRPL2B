@@ -33,6 +33,20 @@ class PengelolaanLimbah extends Model
         'biaya' => 'decimal:2',
     ];
 
+    // Boot method untuk debugging
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            \Log::info('Creating PengelolaanLimbah', $model->toArray());
+        });
+
+        static::created(function ($model) {
+            \Log::info('Created PengelolaanLimbah', ['id' => $model->id]);
+        });
+    }
+
     // Relationships
     public function perusahaan()
     {
