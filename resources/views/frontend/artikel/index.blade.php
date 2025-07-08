@@ -2,7 +2,7 @@
     <x-slot:title>Artikel - EcoCycle</x-slot:title>
 
     <!-- Hero Section -->
-    <section class="bg-gradient-to-r from-[#042A20] to-[#18B17C] py-16">
+    <section class="bg-gradient-to-r from-[#042A20] to-[#18B17C] pt-24 pb-16">
         <div class="container mx-auto px-4">
             <div class="text-center text-white">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4">Artikel & Berita</h1>
@@ -60,6 +60,9 @@
                         </h3>
                         
                         <p class="text-gray-600 mb-4 line-clamp-3">{{ $artikel->excerpt }}</p>
+                        <button class="text-[#18B17C] font-semibold hover:text-[#15A06B] transition-colors">
+                                Baca Selengkapnya →
+                            </button>
                         
                         <div class="flex items-center justify-between text-sm text-gray-500">
                             <div class="flex items-center">
@@ -76,6 +79,7 @@
                                     {{ number_format($artikel->views_count) }}
                                 </span>
                             </div>
+                            
                         </div>
                     </div>
                 </article>

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ $title ?? 'EcoCycle-Naima Sustainability' }}</title>
+    <title>Naima Sustainability</title>
     <link rel="shorcut icon" href="assets/img/icon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @vite('resources/css/app.css')
@@ -20,46 +20,46 @@
         .service-card:hover {
             transform: translateY(-5px);
         }
+
+        * {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 
 <body class="bg-white text-gray-900">
-    <x-navbar></x-navbar>
+    <!-- Header -->
+    <x-front-header />
 
     {{ $slot }}
 
     <!-- Footer -->
     <footer class="bg-[#063C2E] text-white py-12">
-        <div class="container mx-auto px-4 grid grid-cols-3 gap-8">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-                <img src="assets/img/logo2.png" alt="NAIMA Sustainability" class="h-8 mb-4">
-                <p class="text-sm">Kami hadir untuk yang telah atau akan menerapkan pengelolaan perusahaan saat
+                <a href="/" class="inline-block">
+                    <img src="assets/img/logo2.png" alt="NAIMA Sustainability" class="h-12 mb-6 hover:opacity-80 transition-opacity cursor-pointer">
+                </a>
+                <p class="text-base leading-relaxed text-gray-200 font-light">Kami hadir untuk yang telah atau akan menerapkan pengelolaan perusahaan saat
                     memulai, ingin memperbaiki, hingga ingin mencapai level yang lebih tinggi dalam aspek keberlanjutan.
                 </p>
-                <div class="flex gap-4 mt-4">
-                    <a href="#" class="text-white hover:text-gray-300"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="text-white hover:text-gray-300"><i class="fab fa-linkedin"></i></a>
+                <div class="flex gap-6 mt-6">
+                    <a href="#" class="text-white hover:text-gray-300 transition-colors text-2xl"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-white hover:text-gray-300 transition-colors text-2xl"><i class="fab fa-linkedin"></i></a>
                 </div>
             </div>
             <div>
-                <h3 class="font-bold mb-4">Alamat Kantor</h3>
-                <p class="text-sm">Mustang No.14a, Dadok Tunggul Hitam, <b>Kec. Koto Tangah, Kota Padang, Sumatera
-                        Barat 25586</b></p>
-                <p class="text-sm mt-4">Email:<br>naima.sustainability@gmail.com</p>
-                <p class="text-sm mt-4">Telepon:<br>+62 823 4567 890</p>
-            </div>
-            <div>
-                <h3 class="font-bold mb-4">Subscribe to Naima</h3>
-                <p class="text-sm mb-4">Dapatkan info ter-update dari Naima</p>
-                <div class="flex gap-2">
-                    <input type="email" placeholder="Email"
-                        class="flex-1 p-2 rounded bg-white/10 border border-white/20">
-                    <button class="bg-[#00A67C] px-4 py-2 rounded hover:bg-[#008F6B] transition-all">Submit</button>
+                <h3 class="font-bold text-xl mb-6 text-white">Alamat Kantor</h3>
+                <div class="space-y-4 text-base text-gray-200">
+                    <p class="leading-relaxed">Mustang No.14a, Dadok Tunggul Hitam, <span class="font-semibold text-white">Kec. Koto Tangah, Kota Padang, Sumatera
+                        Barat 25586</span></p>
+                    <p><span class="font-semibold text-white">Email:</span><br>naima.sustainability@gmail.com</p>
+                    <p><span class="font-semibold text-white">Telepon:</span><br>+62 823 4567 890</p>
                 </div>
             </div>
         </div>
-        <div class="container mx-auto px-4 mt-8 pt-8 border-t border-white/20 text-center text-sm">
-            <p>© {{ date('Y') }} Naima. All Rights Reserved.</p>
+        <div class="container mx-auto px-4 mt-8 pt-8 border-t border-white/20 text-center">
+            <p class="text-sm text-gray-300 font-light">© {{ date('Y') }} Naima. All Rights Reserved.</p>
         </div>
     </footer>
 
@@ -95,9 +95,6 @@
             showSlide(currentSlide);
         }
     </script>
-    @if (Route::has('login'))
-            <div class="h-14.5 hidden lg:block"></div>
-        @endif
 </body>
 
 </html>

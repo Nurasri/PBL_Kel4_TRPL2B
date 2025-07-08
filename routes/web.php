@@ -18,6 +18,14 @@ use App\Http\Controllers\LaporanHasilPengelolaanController;
 Route::get('/', function () {
     return view('frontend.welcome');
 });
+
+Route::get('/tentang-kami', function () {
+    return view('frontend.tentang-kami');
+});
+
+Route::get('/layanan', function () {
+    return view('frontend.layanan');
+});
 // Frontend routes (public access)
 Route::prefix('artikel')->name('frontend.artikel.')->group(function () {
     Route::get('/', [FrontendArtikelController::class, 'index'])->name('index');
