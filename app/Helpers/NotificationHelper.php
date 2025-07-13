@@ -45,7 +45,7 @@ class NotificationHelper
             'Perusahaan Baru Terdaftar',
             "Perusahaan {$perusahaan->nama_perusahaan} telah mendaftar di sistem",
             'info',
-            route('admin.perusahaan.show', $perusahaan)
+            route('perusahaan.show', $perusahaan)
         );
     }
 
@@ -55,7 +55,7 @@ class NotificationHelper
             'Profil Perusahaan Diperbarui',
             "Perusahaan {$perusahaan->nama_perusahaan} telah memperbarui profil mereka",
             'info',
-            route('admin.perusahaan.show', $perusahaan)
+            route('perusahaan.show', $perusahaan)
         );
     }
 
@@ -95,7 +95,7 @@ class NotificationHelper
             'Perusahaan Belum Laporan Harian',
             "Perusahaan {$perusahaan->nama_perusahaan} belum mengisi laporan harian hari ini",
             'warning',
-            route('admin.perusahaan.show', $perusahaan)
+            route('perusahaan.show', $perusahaan)
         );
     }
 

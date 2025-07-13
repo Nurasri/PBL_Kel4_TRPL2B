@@ -30,7 +30,8 @@ return new class extends Migration
             $table->string('nomor_sertifikat')->nullable();
             $table->text('catatan_hasil')->nullable();
             
-            
+            // Soft delete timestamp
+            $table->softDeletes(); // For soft deletes
             $table->timestamps();
             
             // Indexes

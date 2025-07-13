@@ -20,12 +20,84 @@
                         Tambah Laporan
                     </x-button>
                 @endif
-                <x-button variant="secondary" href="{{ route('laporan-hasil-pengelolaan.export') }}">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Export CSV
-                </x-button>
+                <!-- Export Dropdown -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" 
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Export
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <div x-show="open" @click.away="open = false" x-transition
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                        <div class="py-1">
+                            <a href="{{ route('laporan-hasil-pengelolaan.export') }}" 
+                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Export CSV
+                            </a>
+                            
+                            <a href="{{ route('laporan-hasil-pengelolaan.export.pdf') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" 
+                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                Export PDF
+                            </a>
+                            
+                            @if(auth()->user()->isPerusahaan())
+                            <button onclick="showSummaryModal()" 
+                                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                Ringkasan PDF
+                            </button>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+   
+                <!-- Modal untuk Summary PDF -->
+                @if(auth()->user()->isPerusahaan())
+                <div id="summaryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Export Ringkasan PDF</h3>
+                            <form action="{{ route('laporan-hasil-pengelolaan.summary.pdf') }}" method="GET">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
+                                    <input type="date" name="start_date" required 
+                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
+                                    <input type="date" name="end_date" required 
+                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500">
+                                </div>
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" onclick="hideSummaryModal()" 
+                                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                                        Batal
+                                    </button>
+                                    <button type="submit" 
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                        Export PDF
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
             </div>
         </div>
 
@@ -454,6 +526,28 @@
                         if (selectAllHeaderCheckbox) selectAllHeaderCheckbox.checked = allChecked;
                     });
                 });
+            });
+
+
+            function showSummaryModal() {
+                document.getElementById('summaryModal').classList.remove('hidden');
+            }
+
+            function hideSummaryModal() {
+                document.getElementById('summaryModal').classList.add('hidden');
+            }
+
+            // Set default dates (last 30 days)
+            document.addEventListener('DOMContentLoaded', function() {
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - 30);
+                
+                const startInput = document.querySelector('input[name="start_date"]');
+                const endInput = document.querySelector('input[name="end_date"]');
+                
+                if (startInput) startInput.value = startDate.toISOString().split('T')[0];
+                if (endInput) endInput.value = endDate.toISOString().split('T')[0];
             });
         </script>
     @endif

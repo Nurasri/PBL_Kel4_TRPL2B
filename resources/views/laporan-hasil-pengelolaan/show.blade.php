@@ -2,19 +2,21 @@
     <x-slot:title>
         Detail Laporan Hasil Pengelolaan
     </x-slot:title>
-    
+
     <div class="container px-6 mx-auto grid">
         <!-- Info Box untuk Admin -->
         @if(auth()->user()->isAdmin())
             <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-700">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <div>
                         <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Mode Admin - Readonly</h4>
                         <p class="text-sm text-blue-600 dark:text-blue-300">
-                            Anda melihat laporan dari {{ $laporanHasilPengelolaan->perusahaan->nama_perusahaan }} dalam mode readonly.
+                            Anda melihat laporan dari {{ $laporanHasilPengelolaan->perusahaan->nama_perusahaan }} dalam mode
+                            readonly.
                         </p>
                     </div>
                 </div>
@@ -32,11 +34,15 @@
             </h2>
             <div class="flex space-x-2">
                 <!-- Edit button hanya untuk perusahaan pemilik -->
-                                @if(auth()->user()->isPerusahaan() && 
-                    $laporanHasilPengelolaan->perusahaan_id === auth()->user()->perusahaan->id)
+                @if(
+                        auth()->user()->isPerusahaan() &&
+                        $laporanHasilPengelolaan->perusahaan_id === auth()->user()->perusahaan->id
+                    )
                     <x-button href="{{ route('laporan-hasil-pengelolaan.edit', $laporanHasilPengelolaan) }}">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                            </path>
                         </svg>
                         Edit
                     </x-button>
@@ -63,7 +69,7 @@
                         Informasi Laporan
                     </h3>
                 </div>
-                
+
                 <div class="p-6 space-y-4">
                     <div>
                         <x-label>Tanggal Selesai</x-label>
@@ -75,20 +81,21 @@
                     <div>
                         <x-label>Status Hasil</x-label>
                         @php
-                            $statusClass = match($laporanHasilPengelolaan->status_hasil) {
+                            $statusClass = match ($laporanHasilPengelolaan->status_hasil) {
                                 'berhasil' => 'green',
                                 'sebagian_berhasil' => 'yellow',
                                 'gagal' => 'red',
                                 default => 'gray'
                             };
-                            $statusName = match($laporanHasilPengelolaan->status_hasil) {
+                            $statusName = match ($laporanHasilPengelolaan->status_hasil) {
                                 'berhasil' => 'Berhasil',
                                 'sebagian_berhasil' => 'Sebagian Berhasil',
                                 'gagal' => 'Gagal',
                                 default => ucfirst($laporanHasilPengelolaan->status_hasil)
                             };
                         @endphp
-                        <span class="px-3 py-1 text-sm font-semibold leading-tight text-{{ $statusClass }}-700 bg-{{ $statusClass }}-100 rounded-full">
+                        <span
+                            class="px-3 py-1 text-sm font-semibold leading-tight text-{{ $statusClass }}-700 bg-{{ $statusClass }}-100 rounded-full">
                             {{ $statusName }}
                         </span>
                     </div>
@@ -97,14 +104,16 @@
                         <div>
                             <x-label>Jumlah Berhasil Dikelola</x-label>
                             <div class="text-gray-900 dark:text-gray-100 font-medium">
-                                {{ number_format($laporanHasilPengelolaan->jumlah_berhasil_dikelola, 2) }} {{ $laporanHasilPengelolaan->satuan }}
+                                {{ number_format($laporanHasilPengelolaan->jumlah_berhasil_dikelola, 2) }}
+                                {{ $laporanHasilPengelolaan->satuan }}
                             </div>
                         </div>
 
                         <div>
                             <x-label>Jumlah Residu</x-label>
                             <div class="text-gray-900 dark:text-gray-100 font-medium">
-                                {{ number_format($laporanHasilPengelolaan->jumlah_residu ?? 0, 2) }} {{ $laporanHasilPengelolaan->satuan }}
+                                {{ number_format($laporanHasilPengelolaan->jumlah_residu ?? 0, 2) }}
+                                {{ $laporanHasilPengelolaan->satuan }}
                             </div>
                         </div>
                     </div>
@@ -119,8 +128,8 @@
                         @endphp
                         <div class="flex items-center mt-2">
                             <div class="w-full bg-gray-200 rounded-full h-3 mr-3">
-                                <div class="bg-{{ $colorClass }}-600 h-3 rounded-full" 
-                                     style="width: {{ min($efisiensi, 100) }}%"></div>
+                                <div class="bg-{{ $colorClass }}-600 h-3 rounded-full"
+                                    style="width: {{ min($efisiensi, 100) }}%"></div>
                             </div>
                             <span class="text-sm font-medium text-{{ $colorClass }}-600">
                                 {{ number_format($efisiensi, 1) }}%
@@ -167,7 +176,8 @@
                     @if($laporanHasilPengelolaan->catatan_hasil)
                         <div>
                             <x-label>Catatan Hasil</x-label>
-                            <div class="text-gray-700 dark:text-gray-200 text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                            <div
+                                class="text-gray-700 dark:text-gray-200 text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                                 {{ $laporanHasilPengelolaan->catatan_hasil }}
                             </div>
                         </div>
@@ -182,7 +192,7 @@
                         Informasi Pengelolaan
                     </h3>
                 </div>
-                
+
                 <div class="p-6 space-y-4">
                     <div>
                         <x-label>Jenis Limbah</x-label>
@@ -223,7 +233,8 @@
                     <div>
                         <x-label>Jumlah Dikelola (Target)</x-label>
                         <div class="text-gray-900 dark:text-gray-100 font-medium">
-                            {{ number_format($laporanHasilPengelolaan->pengelolaanLimbah->jumlah_dikelola, 2) }} {{ $laporanHasilPengelolaan->satuan }}
+                            {{ number_format($laporanHasilPengelolaan->pengelolaanLimbah->jumlah_dikelola, 2) }}
+                            {{ $laporanHasilPengelolaan->satuan }}
                         </div>
                     </div>
 
@@ -247,16 +258,22 @@
                         <div class="space-y-2">
                             <div class="flex justify-between text-sm">
                                 <span>Target:</span>
-                                <span class="font-medium">{{ number_format($laporanHasilPengelolaan->pengelolaanLimbah->jumlah_dikelola, 2) }} {{ $laporanHasilPengelolaan->satuan }}</span>
+                                <span
+                                    class="font-medium">{{ number_format($laporanHasilPengelolaan->pengelolaanLimbah->jumlah_dikelola, 2) }}
+                                    {{ $laporanHasilPengelolaan->satuan }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span>Berhasil:</span>
-                                <span class="font-medium text-green-600">{{ number_format($laporanHasilPengelolaan->jumlah_berhasil_dikelola, 2) }} {{ $laporanHasilPengelolaan->satuan }}</span>
+                                <span
+                                    class="font-medium text-green-600">{{ number_format($laporanHasilPengelolaan->jumlah_berhasil_dikelola, 2) }}
+                                    {{ $laporanHasilPengelolaan->satuan }}</span>
                             </div>
                             @if($laporanHasilPengelolaan->jumlah_residu > 0)
                                 <div class="flex justify-between text-sm">
                                     <span>Residu:</span>
-                                    <span class="font-medium text-red-600">{{ number_format($laporanHasilPengelolaan->jumlah_residu, 2) }} {{ $laporanHasilPengelolaan->satuan }}</span>
+                                    <span
+                                        class="font-medium text-red-600">{{ number_format($laporanHasilPengelolaan->jumlah_residu, 2) }}
+                                        {{ $laporanHasilPengelolaan->satuan }}</span>
                                 </div>
                             @endif
                             <div class="border-t pt-2 mt-2">
@@ -281,7 +298,7 @@
                         Informasi Perusahaan
                     </h3>
                 </div>
-                
+
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
@@ -327,12 +344,12 @@
                         Dokumentasi
                     </h3>
                 </div>
-                
+
                 <div class="p-6">
                     @php
                         $files = json_decode($laporanHasilPengelolaan->dokumentasi, true) ?? [];
                     @endphp
-                    
+
                     @if(count($files) > 0)
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             @foreach($files as $index => $file)
@@ -342,40 +359,45 @@
                                     $isImage = in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif']);
                                     $isPdf = $fileExtension === 'pdf';
                                 @endphp
-                                
+
                                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     @if($isImage)
                                         <div class="mb-3">
-                                            <img src="{{ Storage::url($file) }}" 
-                                                 alt="Dokumentasi {{ $index + 1 }}" 
-                                                 class="w-full h-32 object-cover rounded-md">
+                                            <img src="{{ Storage::url($file) }}" alt="Dokumentasi {{ $index + 1 }}"
+                                                class="w-full h-32 object-cover rounded-md">
                                         </div>
                                     @elseif($isPdf)
                                         <div class="mb-3 flex items-center justify-center h-32 bg-red-50 dark:bg-red-900 rounded-md">
                                             <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                                </path>
                                             </svg>
                                         </div>
                                     @else
                                         <div class="mb-3 flex items-center justify-center h-32 bg-gray-50 dark:bg-gray-700 rounded-md">
                                             <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                                </path>
                                             </svg>
                                         </div>
                                     @endif
-                                    
+
                                     <div class="text-sm">
                                         <div class="font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ $fileName }}">
                                             {{ Str::limit($fileName, 30) }}
                                         </div>
                                         <div class="text-gray-500 uppercase">{{ $fileExtension }}</div>
                                     </div>
-                                    
+
                                     <div class="mt-3">
-                                        <a href="{{ route('laporan-hasil-pengelolaan.download-dokumentasi', [$laporanHasilPengelolaan, $index]) }}" 
-                                           class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors">
+                                        <a href="{{ route('laporan-hasil-pengelolaan.download-dokumentasi', [$laporanHasilPengelolaan, $index]) }}"
+                                            class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                                </path>
                                             </svg>
                                             Download
                                         </a>
@@ -385,8 +407,11 @@
                         </div>
                     @else
                         <div class="text-center py-8">
-                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                </path>
                             </svg>
                             <p class="text-gray-500 dark:text-gray-400">Tidak ada dokumentasi</p>
                         </div>
@@ -402,19 +427,23 @@
                     Timeline Pengelolaan
                 </h3>
             </div>
-            
+
             <div class="p-6">
                 <div class="flow-root">
                     <ul class="-mb-8">
                         <!-- Mulai Pengelolaan -->
                         <li>
                             <div class="relative pb-8">
-                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                    aria-hidden="true"></span>
                                 <div class="relative flex space-x-3">
                                     <div>
-                                        <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
-                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        <span
+                                            class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                             </svg>
                                         </span>
                                     </div>
@@ -438,18 +467,25 @@
                             <div class="relative pb-8">
                                 <div class="relative flex space-x-3">
                                     <div>
-                                        <span class="h-8 w-8 rounded-full bg-{{ $statusClass }}-500 flex items-center justify-center ring-8 ring-white">
+                                        <span
+                                            class="h-8 w-8 rounded-full bg-{{ $statusClass }}-500 flex items-center justify-center ring-8 ring-white">
                                             @if($laporanHasilPengelolaan->status_hasil === 'berhasil')
-                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M5 13l4 4L19 7"></path>
                                                 </svg>
                                             @elseif($laporanHasilPengelolaan->status_hasil === 'sebagian_berhasil')
-                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
                                             @else
-                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"></path>
                                                 </svg>
                                             @endif
                                         </span>
@@ -474,9 +510,13 @@
                             <div class="relative">
                                 <div class="relative flex space-x-3">
                                     <div>
-                                        <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
-                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        <span
+                                            class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                                </path>
                                             </svg>
                                         </span>
                                     </div>
@@ -500,33 +540,52 @@
         </x-card>
 
         <!-- Action Buttons -->
-                <!-- Action Buttons -->
+        <!-- Action Buttons -->
         <div class="flex justify-end space-x-3">
-            @if(auth()->user()->isPerusahaan() && 
-                $laporanHasilPengelolaan->perusahaan_id === auth()->user()->perusahaan->id)
+            @if(
+                    auth()->user()->isPerusahaan() &&
+                    $laporanHasilPengelolaan->perusahaan_id === auth()->user()->perusahaan->id
+                )
                 <x-button href="{{ route('laporan-hasil-pengelolaan.edit', $laporanHasilPengelolaan) }}">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
                     </svg>
                     Edit Laporan
                 </x-button>
-                
-                <form action="{{ route('laporan-hasil-pengelolaan.destroy', $laporanHasilPengelolaan) }}" method="POST" class="inline"
-                      onsubmit="return confirm('Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.')">
+
+                <!-- Export PDF Button -->
+                <x-button variant="secondary"
+                    href="{{ route('laporan-hasil-pengelolaan.single.pdf', $laporanHasilPengelolaan) }}">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    Export PDF
+                </x-button>
+
+                <form action="{{ route('laporan-hasil-pengelolaan.destroy', $laporanHasilPengelolaan) }}" method="POST"
+                    class="inline"
+                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.')">
                     @csrf
                     @method('DELETE')
                     <x-button type="submit" variant="danger">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
                         </svg>
                         Hapus Laporan
                     </x-button>
                 </form>
             @endif
-            
+
             <x-button variant="secondary" href="{{ route('laporan-hasil-pengelolaan.index') }}">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
                 Kembali ke Daftar
             </x-button>

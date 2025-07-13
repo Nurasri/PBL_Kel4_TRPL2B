@@ -1,5 +1,5 @@
 <x-layout>
-    
+    <x-slot:title>Layanan EcoCycle - Pengelolaan Limbah Berkelanjutan</x-slot:title>
     <!-- Hero Section -->
     <section class="pt-24 pb-16 bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white">
         <div class="container mx-auto px-4 text-center">

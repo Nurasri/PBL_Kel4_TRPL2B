@@ -209,12 +209,20 @@ class AdminController extends Controller
         })->count();
 
         if ($inactiveCompanies > 0) {
-            NotificationHelper::notifyAdmins(
-                'Perusahaan Tidak Aktif',
-                "{$inactiveCompanies} perusahaan tidak melaporkan aktivitas selama 7 hari terakhir",
-                'warning',
-                route('admin.perusahaan.index')
-            );
+            // Cek apakah notifikasi sudah pernah dikirim dalam 1 hari terakhir
+            $alreadySent = \App\Models\Notification::where('title', 'Perusahaan Tidak Aktif')
+                ->where('type', 'warning')
+                ->where('created_at', '>=', now()->subDay())
+                ->exists();
+
+            if (!$alreadySent) {
+                NotificationHelper::notifyAdmins(
+                    'Perusahaan Tidak Aktif',
+                    "{$inactiveCompanies} perusahaan tidak melaporkan aktivitas selama 7 hari terakhir",
+                    'warning',
+                    route('admin.perusahaan.index')
+                );
+            }
         }
 
 

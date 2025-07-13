@@ -11,6 +11,8 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class LaporanHasilPengelolaanController extends Controller
 {
@@ -149,7 +151,7 @@ class LaporanHasilPengelolaanController extends Controller
             'tanggal_selesai' => 'required|date',
             'jumlah_berhasil_dikelola' => 'required|numeric|min:0',
             'jumlah_residu' => 'nullable|numeric|min:0',
-            'status_hasil' => 'required|in:berhasil,sebagian_berhasil,gagal',
+            'status_hasil' => 'required|in:berhasil,partial,gagal',
             'keterangan' => 'nullable|string',
             'dokumentasi.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
         ]);
@@ -277,7 +279,7 @@ class LaporanHasilPengelolaanController extends Controller
             'tanggal_selesai' => 'required|date',
             'jumlah_berhasil_dikelola' => 'required|numeric|min:0',
             'jumlah_residu' => 'nullable|numeric|min:0',
-            'status_hasil' => 'required|in:berhasil,sebagian_berhasil,gagal',
+            'status_hasil' => 'required|in:berhasil,partial,gagal',
             'keterangan' => 'nullable|string',
             'dokumentasi.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
         ]);
@@ -495,7 +497,7 @@ class LaporanHasilPengelolaanController extends Controller
         // Summary statistics
         $totalLaporan = $query->count();
         $laporanBerhasil = (clone $query)->where('status_hasil', 'berhasil')->count();
-        $laporanSebagianBerhasil = (clone $query)->where('status_hasil', 'sebagian_berhasil')->count();
+        $laporanPartial = (clone $query)->where('status_hasil', 'partial')->count();
         $laporanGagal = (clone $query)->where('status_hasil', 'gagal')->count();
 
         // Recent reports
@@ -526,7 +528,7 @@ class LaporanHasilPengelolaanController extends Controller
         return view('laporan-hasil-pengelolaan.dashboard', compact(
             'totalLaporan',
             'laporanBerhasil',
-            'laporanSebagianBerhasil',
+            'laporanPartial',
             'laporanGagal',
             'recentReports',
             'monthlyData'
@@ -614,4 +616,225 @@ class LaporanHasilPengelolaanController extends Controller
             return back()->with('error', 'Gagal melakukan bulk action: ' . $e->getMessage());
         }
     }
+   
+    /**
+     * Export laporan hasil to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $user = Auth::user();
+
+        // Base query
+        $query = LaporanHasilPengelolaan::with([
+            'pengelolaanLimbah.jenisLimbah',
+            'pengelolaanLimbah.vendor',
+            'pengelolaanLimbah.penyimpanan',
+            'perusahaan'
+        ]);
+
+        // Filter berdasarkan role
+        if ($user->isPerusahaan()) {
+            $query->where('perusahaan_id', $user->perusahaan->id);
+        }
+
+        // Apply same filters as index
+        if ($request->filled('perusahaan_id') && $user->isAdmin()) {
+            $query->where('perusahaan_id', $request->perusahaan_id);
+        }
+
+        if ($request->filled('jenis_limbah_id')) {
+            $query->whereHas('pengelolaanLimbah', function ($q) use ($request) {
+                $q->where('jenis_limbah_id', $request->jenis_limbah_id);
+            });
+        }
+
+        if ($request->filled('vendor_id')) {
+            $query->whereHas('pengelolaanLimbah', function ($q) use ($request) {
+                $q->where('vendor_id', $request->vendor_id);
+            });
+        }
+
+        if ($request->filled('status_hasil')) {
+            $query->where('status_hasil', $request->status_hasil);
+        }
+
+        if ($request->filled('tanggal_dari')) {
+            $query->where('tanggal_selesai', '>=', $request->tanggal_dari);
+        }
+
+        if ($request->filled('tanggal_sampai')) {
+            $query->where('tanggal_selesai', '<=', $request->tanggal_sampai);
+        }
+
+        $laporanHasil = $query->latest('tanggal_selesai')->get();
+
+        // Prepare data for PDF
+        $data = [
+            'laporanHasil' => $laporanHasil,
+            'user' => $user,
+            'filters' => [
+                'tanggal_dari' => $request->tanggal_dari,
+                'tanggal_sampai' => $request->tanggal_sampai,
+                'status_hasil' => $request->status_hasil,
+                'perusahaan_id' => $request->perusahaan_id,
+            ],
+            'generated_at' => now(),
+            'total_laporan' => $laporanHasil->count(),
+            'total_berhasil' => $laporanHasil->where('status_hasil', 'berhasil')->count(),
+            'total_partial' => $laporanHasil->where('status_hasil', 'partial')->count(),
+            'total_gagal' => $laporanHasil->where('status_hasil', 'gagal')->count(),
+            'total_limbah_dikelola' => $laporanHasil->sum('jumlah_berhasil_dikelola'),
+            'total_residu' => $laporanHasil->sum('jumlah_residu'),
+        ];
+
+        // Generate filename
+        $filename = 'laporan-hasil-pengelolaan-' . now()->format('Y-m-d-H-i-s') . '.pdf';
+
+        // Generate PDF
+        $pdf = Pdf::loadView('laporan-hasil-pengelolaan.pdf.export', $data);
+        
+        // Set paper size and orientation
+        $pdf->setPaper('A4', 'landscape');
+        
+        // Set options
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'defaultFont' => 'sans-serif',
+            'margin_top' => 10,
+            'margin_right' => 10,
+            'margin_bottom' => 10,
+            'margin_left' => 10,
+        ]);
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Export single laporan to PDF
+     */
+    public function exportSinglePdf(LaporanHasilPengelolaan $laporanHasilPengelolaan)
+    {
+        $user = Auth::user();
+
+        // Check access permission
+        if ($user->isPerusahaan() && $laporanHasilPengelolaan->perusahaan_id !== $user->perusahaan->id) {
+            abort(403, 'Anda tidak memiliki akses ke laporan ini.');
+        }
+
+        $laporanHasilPengelolaan->load([
+            'pengelolaanLimbah.jenisLimbah',
+            'pengelolaanLimbah.penyimpanan',
+            'pengelolaanLimbah.vendor',
+            'perusahaan'
+        ]);
+
+        // Calculate efficiency
+        $totalJumlah = $laporanHasilPengelolaan->jumlah_berhasil_dikelola + ($laporanHasilPengelolaan->jumlah_residu ?? 0);
+        $efisiensi = $totalJumlah > 0 ? ($laporanHasilPengelolaan->jumlah_berhasil_dikelola / $totalJumlah) * 100 : 0;
+
+        $data = [
+            'laporan' => $laporanHasilPengelolaan,
+            'efisiensi' => $efisiensi,
+            'generated_at' => now(),
+            'user' => $user,
+        ];
+
+        $filename = 'laporan-hasil-' . $laporanHasilPengelolaan->id . '-' . now()->format('Y-m-d') . '.pdf';
+
+        $pdf = Pdf::loadView('laporan-hasil-pengelolaan.pdf.single', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Generate summary report PDF
+     */
+    public function exportSummaryPdf(Request $request)
+    {
+        $user = Auth::user();
+
+        // Validate date range
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = Carbon::parse($request->start_date);
+        $endDate = Carbon::parse($request->end_date);
+
+        // Base query
+        $query = LaporanHasilPengelolaan::with([
+            'pengelolaanLimbah.jenisLimbah',
+            'pengelolaanLimbah.vendor',
+            'perusahaan'
+        ])->whereBetween('tanggal_selesai', [$startDate, $endDate]);
+
+        // Filter berdasarkan role
+        if ($user->isPerusahaan()) {
+            $query->where('perusahaan_id', $user->perusahaan->id);
+        }
+
+        $laporanHasil = $query->get();
+
+        // Generate statistics
+        $statistics = [
+            'total_laporan' => $laporanHasil->count(),
+            'berhasil' => $laporanHasil->where('status_hasil', 'berhasil')->count(),
+            'partial' => $laporanHasil->where('status_hasil', 'partial')->count(),
+            'gagal' => $laporanHasil->where('status_hasil', 'gagal')->count(),
+            'total_limbah_dikelola' => $laporanHasil->sum('jumlah_berhasil_dikelola'),
+            'total_residu' => $laporanHasil->sum('jumlah_residu'),
+            'rata_rata_efisiensi' => $laporanHasil->avg('efisiensi_pengelolaan') ?? 0,
+        ];
+
+        // Group by jenis limbah
+        $byJenisLimbah = $laporanHasil->groupBy('pengelolaanLimbah.jenisLimbah.nama')
+            ->map(function ($group) {
+                return [
+                    'count' => $group->count(),
+                    'total_dikelola' => $group->sum('jumlah_berhasil_dikelola'),
+                    'total_residu' => $group->sum('jumlah_residu'),
+                ];
+            });
+
+        // Group by vendor
+        $byVendor = $laporanHasil->groupBy('pengelolaanLimbah.vendor.nama_perusahaan')
+            ->map(function ($group) {
+                return [
+                    'count' => $group->count(),
+                    'total_dikelola' => $group->sum('jumlah_berhasil_dikelola'),
+                ];
+            });
+
+        // Monthly trend
+        $monthlyTrend = $laporanHasil->groupBy(function ($item) {
+            return $item->tanggal_selesai->format('Y-m');
+        })->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'total_dikelola' => $group->sum('jumlah_berhasil_dikelola'),
+            ];
+        });
+
+        $data = [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'statistics' => $statistics,
+            'by_jenis_limbah' => $byJenisLimbah,
+            'by_vendor' => $byVendor,
+            'monthly_trend' => $monthlyTrend,
+            'generated_at' => now(),
+            'user' => $user,
+        ];
+
+        $filename = 'ringkasan-laporan-hasil-' . $startDate->format('Y-m-d') . '-to-' . $endDate->format('Y-m-d') . '.pdf';
+
+        $pdf = Pdf::loadView('laporan-hasil-pengelolaan.pdf.summary', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->download($filename);
+    }
+
 }

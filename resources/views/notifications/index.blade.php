@@ -38,7 +38,7 @@
                                     <div class="flex items-center space-x-4">
                                         @if($notification->action_url)
                                             <a href="{{ $notification->action_url }}" 
-                                               onclick="markAsRead({{ $notification->id }})"
+                                               onclick="event.preventDefault(); markAsReadAndRedirect({{ $notification->id }}, '{{ $notification->action_url }}')"
                                                class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                                 Lihat Detail →
                                             </a>
@@ -82,6 +82,18 @@
                 }
             }).then(() => {
                 location.reload();
+            });
+        }
+
+        function markAsReadAndRedirect(notificationId, url) {
+            fetch(`/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content')
+                }
+            }).then(() => {
+                window.location.href = url;
             });
         }
     </script>

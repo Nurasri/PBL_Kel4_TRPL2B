@@ -139,12 +139,12 @@
             </div>
         </div>
 
-        <div class="xl:col-span-1">
-        @php
-            $adminNotifications = auth()->user()->notifications()->latest()->take(5)->get();
-        @endphp
-        <x-notification-widget :notifications="$adminNotifications" />
-    </div>
+        <div class="xl:col-span-1 mb-8">
+            @php
+                $adminNotifications = auth()->user()->notifications()->latest()->take(5)->get();
+            @endphp
+            <x-notification-widget :notifications="$adminNotifications" />
+        </div>
 
         <!-- Charts Section -->
         <div class="grid gap-6 mb-8 md:grid-cols-2">
@@ -204,7 +204,7 @@
                         </div>
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-red-600">Rendah (<60%)</span>
+                                <span class="text-sm text-red-600">Rendah <(60%) </span>
                                 <span class="text-sm font-medium">{{ $efisiensiStats['rendah'] }}</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">

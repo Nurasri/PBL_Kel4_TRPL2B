@@ -59,12 +59,14 @@
                             </a>
                         </h3>
                         
-                        <p class="text-gray-600 mb-4 line-clamp-3">{{ $artikel->excerpt }}</p>
-                        <button class="text-[#18B17C] font-semibold hover:text-[#15A06B] transition-colors">
-                                Baca Selengkapnya →
-                            </button>
+                        <p class="text-gray-600 mb-1 line-clamp-3">{{ $artikel->excerpt }}</p>
+
+                        <a href="{{ route('frontend.artikel.show', $artikel->slug) }}"
+                            class="text-[#18B17C] font-semibold hover:text-[#15A06B] transition-colors">
+                            Baca Selengkapnya →
+                        </a>
                         
-                        <div class="flex items-center justify-between text-sm text-gray-500">
+                        <div class="flex mt-3 items-center justify-between text-sm text-gray-500">
                             <div class="flex items-center">
                                 <i class="fas fa-user mr-1"></i>
                                 {{ $artikel->user->name }}

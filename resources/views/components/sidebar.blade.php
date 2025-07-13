@@ -66,6 +66,7 @@
   :class="{'w-64': !isSidebarCollapsed, 'w-20': isSidebarCollapsed}"
 >
   <div class="py-4 text-gray-500 dark:text-gray-400 h-full flex flex-col">
+    
     <!-- Logo/Brand -->
     <div class="flex items-center justify-center px-4 mb-6">
       <a class="text-lg font-bold text-green-600 dark:text-green-400 transition-all duration-300" 
@@ -75,7 +76,7 @@
         <img x-show="!isSidebarCollapsed" x-transition 
             src="{{ asset('assets/img/logo.png') }}" 
             alt="EcoCycle Logo" 
-            class="h-8 w-auto" />
+            class=" w-auto" />
 
         <!-- Logo kecil saat sidebar collapse -->
         <img x-show="isSidebarCollapsed" x-transition 
