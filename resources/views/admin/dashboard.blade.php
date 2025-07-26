@@ -139,12 +139,7 @@
             </div>
         </div>
 
-        <div class="xl:col-span-1 mb-8">
-            @php
-                $adminNotifications = auth()->user()->notifications()->latest()->take(5)->get();
-            @endphp
-            <x-notification-widget :notifications="$adminNotifications" />
-        </div>
+        
 
         <!-- Charts Section -->
         <div class="grid gap-6 mb-8 md:grid-cols-2">
@@ -231,7 +226,7 @@
             <!-- Top Perusahaan -->
             <div class="bg-white rounded-lg shadow-xs dark:bg-gray-800">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Top 5 Perusahaan (Berdasarkan Laporan)</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Top 5 Perusahaan (Berdasarkan Laporan)</h3>
                 </div>
                 <div class="p-6">
                     @if($topPerusahaanByLaporan->count() > 0)
@@ -397,6 +392,12 @@
                     @endif
                 </div>
             </div>
+        </div>
+        <div class="xl:col-span-1 mb-8">
+            @php
+                $adminNotifications = auth()->user()->notifications()->latest()->take(5)->get();
+            @endphp
+            <x-notification-widget :notifications="$adminNotifications" />
         </div>
 
         <!-- Quick Actions -->

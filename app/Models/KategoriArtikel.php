@@ -116,7 +116,7 @@ class KategoriArtikel extends Model
     public static function validationRules($id = null): array
     {
         return [
-            'nama_kategori' => 'required|string|max:255',
+            'nama_kategori' => 'required|string|max:255|unique:kategori_artikels,nama_kategori,' . $id,
             'deskripsi' => 'nullable|string|max:500',
             'warna' => 'required|regex:/^#[0-9A-Fa-f]{6}$/',
             'icon' => 'nullable|string|max:100',

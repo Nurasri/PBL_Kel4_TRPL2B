@@ -45,9 +45,7 @@
                         </label>
                         <x-input type="text" name="kode_limbah" value="{{ old('kode_limbah') }}"
                             class="@error('kode_limbah') @enderror" placeholder="Otomatis jika kosong" />
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Kosongkan untuk generate otomatis berdasarkan kategori
-                        </p>
+                       
                         @error('kode_limbah')
                             <p class="form-error">{{ $message }}</p>
                         @enderror

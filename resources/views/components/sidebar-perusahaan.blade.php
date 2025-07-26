@@ -15,6 +15,61 @@
 
 <li class="relative px-4 py-3">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
+    style="{{ request()->routeIs('laporan-harian.*') ? '' : 'display:none;' }}"></span>
+  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('laporan-harian.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
+    href="{{ route('laporan-harian.index') }}" :title="isSidebarCollapsed ? 'Laporan Harian' : ''">
+    <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
+      stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+      </path>
+    </svg>
+    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Laporan Harian</span>
+  </a>
+</li>
+
+<li class="relative px-4 py-3">
+  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
+    style="{{ request()->routeIs('pengelolaan-limbah.*') ? '' : 'display:none;' }}"></span>
+  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('pengelolaan-limbah.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
+    href="{{ route('pengelolaan-limbah.index') }}">
+    <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+    </svg>
+    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Pengelolaan Limbah</span>
+  </a>
+</li>
+
+<li class="relative px-4 py-3">
+  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
+    style="{{ request()->routeIs('laporan-hasil-pengelolaan.*') ? ''  :'display:none;'}}"></span>
+  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('laporan-hasil-pengelolaan.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
+    href="{{ route('laporan-hasil-pengelolaan.index') }}">
+    <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Laporan Hasil Pengolahan</span>
+  </a>
+</li>
+
+<li class="relative px-4 py-3">
+  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
+    style="{{ request()->routeIs('penyimpanan.*') ? '' : 'display:none;' }}"></span>
+  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('penyimpanan.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
+    href="{{ route('penyimpanan.index') }}">
+    <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M5 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V8z"></path>
+      <path d="M9 12h6"></path>
+    </svg>
+    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Penyimpanan</span>
+  </a>
+</li>
+
+<li class="relative px-4 py-3">
+  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
     style="{{ request()->routeIs('jenis-limbah.*') ? '' : 'display:none;' }}"></span>
   <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('jenis-limbah.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-gray-500' : '' }}"
     href="{{ route('jenis-limbah.index') }}" :title="isSidebarCollapsed ? 'Referensi Jenis Limbah' : ''">
@@ -38,57 +93,7 @@
   </a>
 </li>
 
-<li class="relative px-4 py-3">
-  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
-    style="{{ request()->routeIs('laporan-harian.*') ? '' : 'display:none;' }}"></span>
-  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('laporan-harian.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
-    href="{{ route('laporan-harian.index') }}" :title="isSidebarCollapsed ? 'Laporan Harian' : ''">
-    <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
-      stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-      </path>
-    </svg>
-    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Laporan Harian</span>
-  </a>
-</li>
 
-<li class="relative px-4 py-3">
-  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
-    style="{{ request()->routeIs('penyimpanan.*') ? '' : 'display:none;' }}"></span>
-  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('penyimpanan.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
-    href="{{ route('penyimpanan.index') }}">
-    <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      viewBox="0 0 24 24" stroke="currentColor">
-      <path d="M5 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V8z"></path>
-      <path d="M9 12h6"></path>
-    </svg>
-    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Penyimpanan</span>
-  </a>
-</li>
 
-<li class="relative px-4 py-3">
-  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
-    style="{{ request()->routeIs('pengelolaan-limbah.*') ? '' : 'display:none;' }}"></span>
-  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('pengelolaan-limbah.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
-    href="{{ route('pengelolaan-limbah.index') }}">
-    <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      viewBox="0 0 24 24" stroke="currentColor">
-      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-    </svg>
-    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Pengelolaan Limbah</span>
-  </a>
-</li>
 
-<li class="relative px-6 py-3">
-  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
-    style="{{ request()->routeIs('laporan-hasil-pengelolaan.*') ? ''  :'display:none;'}}"></span>
-  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('laporan-hasil-pengelolaan.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
-    href="{{ route('laporan-hasil-pengelolaan.index') }}">
-    <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      viewBox="0 0 24 24" stroke="currentColor">
-      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-    </svg>
-    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Laporan Hasil Pengolahan</span>
-  </a>
-</li>
+

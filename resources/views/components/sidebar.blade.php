@@ -98,7 +98,7 @@
     
     <!-- Bottom Menu -->
     <ul class="px-2 pb-4">
-      <li class="relative px-4 py-3">
+      <li class="relative px-4 py-1">
         <form method="POST" action="{{ route('logout') }}" class="w-full">
           @csrf
           <button type="submit"
@@ -124,3 +124,4 @@
   x-transition:leave-end="opacity-0"
   class="fixed inset-0 z-10 flex items-end bg-black bg-opacity-50 sm:items-center sm:justify-center md:hidden"
   @click="closeSideMenu"></div>
+  

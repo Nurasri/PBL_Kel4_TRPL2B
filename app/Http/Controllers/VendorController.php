@@ -105,8 +105,25 @@ class VendorController extends Controller
      */
     public function destroy(Vendor $vendor): RedirectResponse
     {
+        // Tidak boleh hapus jika vendor masih aktif
+        if ($vendor->status === 'aktif') {
+            return redirect()->route('vendor.index')
+                ->with('error', 'Vendor tidak dapat dihapus karena status masih aktif. Nonaktifkan vendor terlebih dahulu.');
+        }
+
+        // Tidak boleh hapus jika vendor masih mengelola limbah perusahaan
+        if (method_exists($vendor, 'pengelolaanLimbah') && $vendor->pengelolaanLimbah()->exists()) {
+            return redirect()->route('vendor.index')
+                ->with('error', 'Vendor tidak dapat dihapus karena masih mengelola limbah perusahaan.');
+        }
+
         try {
-            $vendor->delete();
+            // Jika soft delete, lakukan forceDelete agar benar-benar hilang dari DB
+            if (method_exists($vendor, 'forceDelete')) {
+                $vendor->forceDelete();
+            } else {
+                $vendor->delete();
+            }
             return redirect()->route('vendor.index')
                 ->with('success', 'Vendor berhasil dihapus.');
         } catch (\Exception $e) {

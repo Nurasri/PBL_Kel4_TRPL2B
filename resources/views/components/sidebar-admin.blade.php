@@ -1,4 +1,4 @@
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
   style="{{ request()->routeIs('admin.dashboard') ? '' : 'display:none;' }}"></span>
   <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('admin.dashboard') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
@@ -12,10 +12,10 @@
   </a>
 </li>
 
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
   style="{{ request()->routeIs('users.*') ? '' : 'display:none;' }}"></span>
-  <a class="inline-flex items-center w-full text-sm font-semibold text-gray-800 dark:text-gray-200 transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('users.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
+  <a class="inline-flex items-center w-full text-sm font-semibold text-gray-500 dark:text-gray-200 transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('users.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
     href="{{ route('users.index') }}"
     :title="isSidebarCollapsed ? 'Manajemen User' : ''">
     <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
@@ -26,10 +26,10 @@
   </a>
 </li>
 
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
-  style="{{ request()->routeIs('perusahaan.*') ? '' : 'display:none;' }}"></span>
-  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('perusahaan.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
+  style="{{ request()->routeIs('admin.perusahaan.*') ? '' : 'display:none;' }}"></span>
+  <a class="inline-flex items-center w-full text-sm font-semibold text-gray-500 dark:text-gray-200 transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('admin.perusahaan.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
     href="{{ route('admin.perusahaan.index') }}"
     :title="isSidebarCollapsed ? 'Manajemen Perusahaan' : ''">
     <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"
@@ -40,7 +40,7 @@
   </a>
 </li>
 
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
   style="{{ request()->routeIs('jenis-limbah.*') ? '' : 'display:none;' }}"></span>
   <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('jenis-limbah.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
@@ -54,7 +54,7 @@
   </a>
 </li>
 
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
   style="{{ request()->routeIs('vendor*') ? '' : 'display:none;' }}"></span>
   <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('vendor.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
@@ -69,7 +69,7 @@
 </li>
 
 <!-- Tambahkan menu laporan harian untuk admin -->
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
   style="{{ request()->routeIs('laporan-harian.*') ? '' : 'display:none;' }}"></span>
   <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('laporan-harian.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
@@ -83,8 +83,20 @@
   </a>
 </li>
 
+<li class="relative px-4 py-1">
+  <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
+    style="{{ request()->routeIs('laporan-hasil-pengelolaan.*') ? ''  :'display:none;'}}"></span>
+  <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('laporan-hasil-pengelolaan.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
+    href="{{ route('laporan-hasil-pengelolaan.index') }}">
+    <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span x-show="!isSidebarCollapsed" x-transition class="ml-4">Laporan Hasil Pengolahan</span>
+  </a>
+</li>
 
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
   style="{{ request()->routeIs('kategori-artikel.*') ? '' : 'display:none;' }}"></span>
   <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('kategori-artikel.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"
@@ -99,7 +111,7 @@
 </li>
 
 <!-- Tambahkan setelah menu kategori-artikel -->
-<li class="relative px-4 py-3">
+<li class="relative px-4 py-1">
   <span x-cloak class="absolute inset-y-0 left-0 w-1 bg-green-600 rounded-tr-lg rounded-br-lg" aria-hidden="true"
   style="{{ request()->routeIs('admin.artikel.*') ? '' : 'display:none;' }}"></span>
   <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-2 py-2 {{ request()->routeIs('admin.artikel.*') ? 'text-green-700 font-bold bg-green-100 dark:bg-green-900' : '' }}"

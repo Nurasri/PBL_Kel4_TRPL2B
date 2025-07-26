@@ -86,6 +86,17 @@ class PerusahaanController extends Controller
 
         // Alerts and Notifications
         $alerts = $this->generateAlerts($perusahaanId);
+        // Data untuk chart laporan harian per jenis limbah
+        $laporan_harian_by_jenis_limbah = LaporanHarian::selectRaw('jenis_limbah_id, COUNT(*) as total')
+            ->where('perusahaan_id', $perusahaanId)
+            ->groupBy('jenis_limbah_id')
+            ->with('jenisLimbah')
+            ->get();
+
+        $laporan_harian_by_jenis_limbah_labels = $laporan_harian_by_jenis_limbah->map(function ($row) {
+            return $row->jenisLimbah ? $row->jenisLimbah->nama : 'Tidak diketahui';
+        });
+        $laporan_harian_by_jenis_limbah_data = $laporan_harian_by_jenis_limbah->pluck('total');
 
         return view('perusahaan.dashboard', compact(
             'perusahaan',
@@ -102,7 +113,9 @@ class PerusahaanController extends Controller
             'recent_pengelolaan',
             'recent_laporan_hasil',
             'monthly_trend',
-            'alerts'
+            'alerts',
+            'laporan_harian_by_jenis_limbah_labels',
+            'laporan_harian_by_jenis_limbah_data',
         ));
     }
 
@@ -195,8 +208,16 @@ class PerusahaanController extends Controller
         return $alerts;
     }
 
+    /**
+     * Display a listing of perusahaan (Admin only)
+     */
     public function index(Request $request): View
     {
+        // Hanya admin yang bisa mengakses daftar semua perusahaan
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Akses ditolak. Hanya admin yang dapat melihat daftar perusahaan.');
+        }
+
         $query = Perusahaan::with('user');
 
         // Search functionality
@@ -207,7 +228,11 @@ class PerusahaanController extends Controller
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('no_telp', 'like', "%{$search}%")
                     ->orWhere('no_registrasi', 'like', "%{$search}%")
-                    ->orWhere('alamat', 'like', "%{$search}%");
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -216,7 +241,22 @@ class PerusahaanController extends Controller
             $query->where('jenis_usaha', $request->jenis_usaha);
         }
 
-        $perusahaans = $query->latest()->paginate(10)->withQueryString();
+        // Filter by status user
+        if ($request->filled('status_user')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('status', $request->status_user);
+            });
+        }
+
+        // Filter by date range
+        if ($request->filled('tanggal_dari')) {
+            $query->where('created_at', '>=', $request->tanggal_dari);
+        }
+        if ($request->filled('tanggal_sampai')) {
+            $query->where('created_at', '<=', $request->tanggal_sampai . ' 23:59:59');
+        }
+
+        $perusahaans = $query->latest()->paginate(15)->withQueryString();
 
         // Data untuk filter
         $jenisUsahaOptions = [
@@ -230,19 +270,49 @@ class PerusahaanController extends Controller
             'lainnya' => 'Lainnya'
         ];
 
-        return view('perusahaan.index', compact('perusahaans', 'jenisUsahaOptions'));
+        $statusUserOptions = [
+            'active' => 'Aktif',
+            'inactive' => 'Tidak Aktif'
+        ];
+
+        return view('perusahaan.index', compact(
+            'perusahaans',
+            'jenisUsahaOptions',
+            'statusUserOptions'
+        ));
     }
 
+    /**
+     * Display the specified perusahaan
+     */
     public function show(Perusahaan $perusahaan): View
     {
         $user = Auth::user();
 
-        // Pastikan user hanya bisa melihat perusahaan miliknya sendiri atau admin
-        if (!$user->isAdmin() && $perusahaan->user_id !== $user->id) {
-            abort(403, 'Unauthorized access.');
+        // Admin bisa melihat semua perusahaan, perusahaan hanya bisa melihat miliknya sendiri
+        if (!$user->isAdmin() && (!$user->isPerusahaan() || $perusahaan->user_id !== $user->id)) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat profil perusahaan ini.');
         }
 
-        return view('perusahaan.show', compact('perusahaan'));
+        // Load relationships
+        $perusahaan->load(['user']);
+
+        // Get statistics untuk perusahaan ini (hanya untuk admin atau pemilik)
+        $statistics = [];
+        if ($user->isAdmin() || ($user->isPerusahaan() && $perusahaan->user_id === $user->id)) {
+            $statistics = [
+                'total_laporan_harian' => LaporanHarian::where('perusahaan_id', $perusahaan->id)->count(),
+                'total_pengelolaan' => PengelolaanLimbah::where('perusahaan_id', $perusahaan->id)->count(),
+                'total_laporan_hasil' => LaporanHasilPengelolaan::where('perusahaan_id', $perusahaan->id)->count(),
+                'total_penyimpanan' => Penyimpanan::where('perusahaan_id', $perusahaan->id)->count(),
+                'laporan_draft' => LaporanHarian::where('perusahaan_id', $perusahaan->id)
+                    ->where('status', 'draft')->count(),
+                'pengelolaan_aktif' => PengelolaanLimbah::where('perusahaan_id', $perusahaan->id)
+                    ->whereIn('status', ['diproses', 'berlangsung'])->count(),
+            ];
+        }
+
+        return view('perusahaan.show', compact('perusahaan', 'statistics'));
     }
 
     public function create(): View|RedirectResponse
@@ -275,80 +345,65 @@ class PerusahaanController extends Controller
             $validated['logo'] = $request->file('logo')->store('logo-perusahaan', 'public');
         }
 
-        $validated['user_id'] = Auth::id();
+        $validated['user_id'] = auth()->id();
 
-        Perusahaan::create($validated);
+        try {
+            $perusahaan = Perusahaan::create($validated);
 
-        return redirect()->route('perusahaan.dashboard')
-            ->with('success', 'Profil perusahaan berhasil dibuat!');
+            // Notifications
+            NotificationHelper::perusahaanRegistered($perusahaan);
+            NotificationHelper::welcomeNewUser(auth()->user());
+
+            return redirect()->route('perusahaan.dashboard')
+                ->with('success', 'Profil perusahaan berhasil dibuat.');
+        } catch (\Exception $e) {
+            \Log::error('Error creating perusahaan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.')->withInput();
+        }
     }
 
     public function edit(Perusahaan $perusahaan): View
     {
-        // Only company users can edit their own profile
-        if (Auth::user()->isAdmin() || Auth::id() !== $perusahaan->user_id) {
-            abort(403);
+        $user = Auth::user();
+
+        // Pastikan user hanya bisa edit perusahaan miliknya sendiri
+        if (!$user->isPerusahaan() || $perusahaan->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit profil perusahaan ini.');
         }
 
         return view('perusahaan.edit', compact('perusahaan'));
     }
 
-    /**
-     * Update the specified company profile.
-     */
     public function update(ProfilPerusahaanRequest $request, Perusahaan $perusahaan): RedirectResponse
     {
-        // Only company users can update their own profile
-        if (Auth::user()->isAdmin() || Auth::id() !== $perusahaan->user_id) {
-            abort(403);
+        $user = Auth::user();
+
+        // Pastikan user hanya bisa update perusahaan miliknya sendiri
+        if (!$user->isPerusahaan() || $perusahaan->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit profil perusahaan ini.');
         }
 
         $validated = $request->validated();
 
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
+            // Hapus logo lama jika ada
             if ($perusahaan->logo) {
                 Storage::disk('public')->delete($perusahaan->logo);
             }
+
             $validated['logo'] = $request->file('logo')->store('logo-perusahaan', 'public');
         }
 
-        $perusahaan->update($validated);
-        NotificationHelper::perusahaanUpdated($perusahaan);
+        try {
+            $perusahaan->update($validated);
 
-        return redirect()->route('perusahaan.dashboard')
-            ->with('success', 'Profil perusahaan berhasil diperbarui!');
-    }
+            NotificationHelper::perusahaanUpdated($perusahaan);
 
-    /**
-     * Remove the specified company profile.
-     */
-    public function destroy(Perusahaan $perusahaan): RedirectResponse
-    {
-        // Only company users can delete their own profile
-        if (Auth::user()->isAdmin() || Auth::id() !== $perusahaan->user_id) {
-            abort(403);
+            return redirect()->route('perusahaan.show', $perusahaan)
+                ->with('success', 'Profil perusahaan berhasil diperbarui.');
+        } catch (\Exception $e) {
+            \Log::error('Error updating perusahaan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memperbarui data. Silakan coba lagi.')->withInput();
         }
-
-        // Delete logo if exists
-        if ($perusahaan->logo) {
-            Storage::disk('public')->delete($perusahaan->logo);
-        }
-
-        $perusahaan->delete();
-
-        return redirect()->route('dashboard')
-            ->with('success', 'Profil perusahaan berhasil dihapus!');
-    }
-
-    public function adminIndex(): View
-    {
-        $perusahaans = Perusahaan::with('user')->latest()->paginate(10);
-        return view('perusahaan.index', compact('perusahaans'));
-    }
-
-    public function adminShow(Perusahaan $perusahaan): View
-    {
-        return view('perusahaan.show', compact('perusahaan'));
     }
 }

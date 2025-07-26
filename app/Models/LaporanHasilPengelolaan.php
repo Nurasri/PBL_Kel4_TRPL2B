@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LaporanHasilPengelolaan extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'perusahaan_id',
@@ -18,94 +18,101 @@ class LaporanHasilPengelolaan extends Model
         'jumlah_berhasil_dikelola',
         'jumlah_residu',
         'satuan',
+        'efisiensi_pengelolaan',
         'metode_disposal_akhir',
         'biaya_aktual',
-        'efisiensi_pengelolaan',
-        'dokumentasi',
         'nomor_sertifikat',
         'catatan_hasil',
-       
+        'dokumentasi',
     ];
 
     protected $casts = [
         'tanggal_selesai' => 'date',
         'jumlah_berhasil_dikelola' => 'decimal:2',
         'jumlah_residu' => 'decimal:2',
-        'biaya_aktual' => 'decimal:2',
         'efisiensi_pengelolaan' => 'decimal:2',
-        'dokumentasi' => 'array',
-        
+        'biaya_aktual' => 'decimal:2',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Auto-calculate efisiensi_pengelolaan
+            $totalJumlah = $model->jumlah_berhasil_dikelola + ($model->jumlah_residu ?? 0);
+            if ($totalJumlah > 0) {
+                $model->efisiensi_pengelolaan = ($model->jumlah_berhasil_dikelola / $totalJumlah) * 100;
+            } else {
+                $model->efisiensi_pengelolaan = 0;
+            }
+        });
+    }
+
     // Relationships
-    public function perusahaan()
+    public function perusahaan(): BelongsTo
     {
         return $this->belongsTo(Perusahaan::class);
     }
 
-    public function pengelolaanLimbah()
+    public function pengelolaanLimbah(): BelongsTo
     {
         return $this->belongsTo(PengelolaanLimbah::class);
     }
 
-    
-
     // Accessors
-    public function getStatusHasilNameAttribute()
+    public function getStatusHasilNameAttribute(): string
     {
-        return self::getStatusHasilOptions()[$this->status_hasil] ?? 'Unknown';
+        return match($this->status_hasil) {
+            'berhasil' => 'Berhasil',
+            'partial' => 'Sebagian Berhasil',
+            'gagal' => 'Gagal',
+            default => ucfirst($this->status_hasil)
+        };
     }
 
-    
-
-    public function getStatusBadgeClassAttribute()
+    public function getStatusHasilBadgeClassAttribute(): string
     {
-        return [
+        return match($this->status_hasil) {
             'berhasil' => 'green',
+            'partial' => 'yellow',
             'gagal' => 'red',
-            'partial' => 'yellow'
-        ][$this->status_hasil] ?? 'gray';
+            default => 'gray'
+        };
     }
 
-    
+    public function getDokumentasiArrayAttribute(): array
+    {
+        if (!$this->dokumentasi) {
+            return [];
+        }
+        
+        $decoded = json_decode($this->dokumentasi, true);
+        return is_array($decoded) ? $decoded : [];
+    }
 
     // Methods
-    public function isDraft()
+    public function canEdit(): bool
     {
-        return $this->status_validasi === 'draft';
+        // Bisa diedit jika belum lewat 30 hari dari tanggal selesai
+        return $this->tanggal_selesai->diffInDays(now()) <= 30;
     }
 
-    public function canEdit()
+    public function canDelete(): bool
     {
-        return true; // Perusahaan selalu bisa edit
-    }
-
-    public function canSubmit()
-    {
-        return $this->status_validasi === 'draft';
-    }
-
-
-
-    public function calculateEfficiency()
-    {
-        if ($this->pengelolaanLimbah && $this->pengelolaanLimbah->jumlah_dikelola > 0) {
-            return ($this->jumlah_berhasil_dikelola / $this->pengelolaanLimbah->jumlah_dikelola) * 100;
-        }
-        return 0;
+        // Bisa dihapus jika belum lewat 7 hari dari tanggal selesai
+        return $this->tanggal_selesai->diffInDays(now()) <= 7;
     }
 
     // Static methods
     public static function getStatusHasilOptions(): array
     {
         return [
-            'berhasil' => 'Berhasil Sepenuhnya',
-            'partial' => 'Berhasil Sebagian',
-            'gagal' => 'Gagal'
+            'berhasil' => 'Berhasil',
+            'partial' => 'Sebagian Berhasil',
+            'gagal' => 'Gagal',
         ];
     }
-
-   
 
     public static function getMetodeDisposalOptions(): array
     {
@@ -113,46 +120,12 @@ class LaporanHasilPengelolaan extends Model
             'landfill' => 'Landfill',
             'incineration' => 'Insinerasi',
             'recycling' => 'Daur Ulang',
-            'composting' => 'Pengomposan',
+            'composting' => 'Kompos',
             'treatment' => 'Pengolahan',
-            'recovery' => 'Recovery',
+            'reuse' => 'Penggunaan Kembali',
+            'stabilization' => 'Stabilisasi',
             'neutralization' => 'Netralisasi',
-            'stabilization' => 'Stabilisasi'
-        ];
-    }
-
-    public static function validationRules($id = null): array
-    {
-        return [
-            'pengelolaan_limbah_id' => 'required|exists:pengelolaan_limbahs,id',
-            'tanggal_selesai' => 'required|date|before_or_equal:today',
-            'status_hasil' => 'required|in:berhasil,gagal,partial',
-            'jumlah_berhasil_dikelola' => 'required|numeric|min:0',
-            'jumlah_residu' => 'nullable|numeric|min:0',
-            'metode_disposal_akhir' => 'nullable|string|max:255',
-            'biaya_aktual' => 'nullable|numeric|min:0',
-            'nomor_sertifikat' => 'nullable|string|max:255',
-            'catatan_hasil' => 'nullable|string|max:2000',
-            'dokumentasi.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120' // 5MB
-        ];
-    }
-
-    public static function validationMessages(): array
-    {
-        return [
-            'pengelolaan_limbah_id.required' => 'Pengelolaan limbah wajib dipilih.',
-            'tanggal_selesai.required' => 'Tanggal selesai wajib diisi.',
-            'tanggal_selesai.before_or_equal' => 'Tanggal selesai tidak boleh lebih dari hari ini.',
-            'status_hasil.required' => 'Status hasil wajib dipilih.',
-            'jumlah_berhasil_dikelola.required' => 'Jumlah berhasil dikelola wajib diisi.',
-            'jumlah_berhasil_dikelola.min' => 'Jumlah tidak boleh kurang dari 0.',
-            'biaya_aktual.numeric' => 'Biaya aktual harus berupa angka.',
-            'biaya_aktual.min' => 'Biaya aktual tidak boleh kurang dari 0.',
-            'dokumentasi.*.file' => 'Dokumentasi harus berupa file.',
-            'dokumentasi.*.mimes' => 'Dokumentasi harus berformat PDF, JPG, JPEG, atau PNG.',
-            'dokumentasi.*.max' => 'Ukuran file dokumentasi maksimal 5MB.',
-            'nomor_sertifikat.max' => 'Nomor sertifikat maksimal 100 karakter.',
-            'catatan_hasil.max' => 'Catatan hasil maksimal 2000 karakter.'
+            'other' => 'Lainnya',
         ];
     }
 
@@ -166,22 +139,20 @@ class LaporanHasilPengelolaan extends Model
     {
         return $query->where('status_hasil', $status);
     }
-    // public function scopeByValidasi($query, $status)
-    // {
-    //     return $query->where('status_validasi', $status);
-    // }
 
-    // Boot method untuk auto-calculate efficiency
-    protected static function boot()
+    public function scopeByDateRange($query, $startDate, $endDate)
     {
-        parent::boot();
-
-        static::saving(function ($model) {
-            // Auto-calculate efficiency if not set
-            if (is_null($model->efisiensi_pengelolaan)) {
-                $model->efisiensi_pengelolaan = $model->calculateEfficiency();
-            }
-        });
+        return $query->whereBetween('tanggal_selesai', [$startDate, $endDate]);
     }
-    
+
+    public function scopeThisMonth($query)
+    {
+        return $query->whereMonth('tanggal_selesai', now()->month)
+                    ->whereYear('tanggal_selesai', now()->year);
+    }
+
+    public function scopeThisYear($query)
+    {
+        return $query->whereYear('tanggal_selesai', now()->year);
+    }
 }

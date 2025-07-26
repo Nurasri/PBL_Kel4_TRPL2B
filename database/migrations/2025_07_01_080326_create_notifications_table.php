@@ -13,11 +13,16 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->text('message');
-            $table->string('type')->default('info'); // info, warning, success, danger
+            $table->enum('type', ['success', 'info', 'warning', 'danger'])->default('info');
             $table->string('action_url')->nullable();
             $table->timestamp('read_at')->nullable();
+            $table->json('data')->nullable();
             $table->timestamps();
+
+            $table->index(['user_id', 'read_at']);
+            $table->index(['user_id', 'created_at']);
         });
+    
     }
 
     public function down()

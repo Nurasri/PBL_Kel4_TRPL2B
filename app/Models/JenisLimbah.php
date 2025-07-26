@@ -244,4 +244,31 @@ class JenisLimbah extends Model
 
         return $kodePrefiks . str_pad($lastNumber, 3, '0', STR_PAD_LEFT);
     }
+    public static function validationRules($id = null)
+    {
+        return [
+            'nama' => 'required|string|max:255',
+            'kategori' => 'required|in:' . implode(',', array_keys(self::KATEGORI)),
+            'kode_limbah' => 'required|string|max:20|unique:jenis_limbahs,kode_limbah,' . $id,
+            'satuan_default' => 'required|in:' . implode(',', array_keys(self::SATUAN)),
+            'tingkat_bahaya' => 'nullable|in:' . implode(',', array_keys(self::TINGKAT_BAHAYA)),
+            'metode_pengelolaan_rekomendasi' => 'nullable|array',
+            'metode_pengelolaan_rekomendasi.*' => 'in:' . implode(',', array_keys(self::METODE_PENGELOLAAN)),
+            'deskripsi' => 'nullable|string',
+            'status' => 'required|in:active,inactive'
+        ];
+    }
+    public static function validationMessages()
+    {
+        return [
+            'nama.required' => 'Nama jenis limbah harus diisi.',
+            'kategori.required' => 'Kategori jenis limbah harus dipilih.',
+            'kode_limbah.required' => 'Kode limbah harus diisi.',
+            'kode_limbah.unique' => 'Kode limbah sudah digunakan.',
+            'satuan_default.required' => 'Satuan default harus dipilih.',
+            'tingkat_bahaya.in' => 'Tingkat bahaya harus sesuai dengan pilihan yang ada.',
+            'metode_pengelolaan_rekomendasi.array' => 'Metode pengelolaan rekomendasi harus berupa array.',
+            'status.required' => 'Status jenis limbah harus dipilih.'
+        ];
+    }
 }

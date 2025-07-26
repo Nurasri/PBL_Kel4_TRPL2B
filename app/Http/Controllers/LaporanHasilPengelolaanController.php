@@ -23,21 +23,24 @@ class LaporanHasilPengelolaanController extends Controller
     {
         $user = Auth::user();
         
-        // Base query
-        $query = LaporanHasilPengelolaan::with([
-            'pengelolaanLimbah.jenisLimbah', 
-            'pengelolaanLimbah.penyimpanan',
-            'pengelolaanLimbah.vendor',
-            'perusahaan'
-        ]);
-
-        // Filter berdasarkan role
-        if ($user->isPerusahaan()) {
-            // Perusahaan hanya melihat laporan mereka sendiri
-            $query->where('perusahaan_id', $user->perusahaan->id);
+        if ($user->isAdmin()) {
+            // Admin dapat melihat semua laporan
+            $query = LaporanHasilPengelolaan::with([
+                'perusahaan', 
+                'pengelolaanLimbah.jenisLimbah', 
+                'pengelolaanLimbah.penyimpanan',
+                'pengelolaanLimbah.vendor'
+            ]);
+        } else {
+            // Perusahaan hanya melihat laporan miliknya
+            $query = LaporanHasilPengelolaan::with([
+                'pengelolaanLimbah.jenisLimbah',
+                'pengelolaanLimbah.penyimpanan', 
+                'pengelolaanLimbah.vendor'
+            ])->where('perusahaan_id', $user->perusahaan->id);
         }
-        // Admin dapat melihat semua laporan (tidak ada filter tambahan)
 
+        
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
@@ -52,7 +55,13 @@ class LaporanHasilPengelolaanController extends Controller
                 ->orWhereHas('perusahaan', function ($subQ) use ($search) {
                     $subQ->where('nama_perusahaan', 'like', "%{$search}%");
                 })
-                ->orWhere('keterangan', 'like', "%{$search}%");
+                ->orWhere('catatan_hasil', 'like', "%{$search}%");
+
+                if (Auth::user()->isAdmin()) {
+                    $q->orWhereHas('perusahaan', function ($subQ) use ($search) {
+                        $subQ->where('nama_perusahaan', 'like', "%{$search}%");
+                    });
+                }
             });
         }
 
@@ -146,14 +155,24 @@ class LaporanHasilPengelolaanController extends Controller
             abort(403, 'Hanya perusahaan yang dapat membuat laporan hasil pengelolaan.');
         }
 
+        // Validasi dengan perbaikan untuk dokumentasi
         $request->validate([
             'pengelolaan_limbah_id' => 'required|exists:pengelolaan_limbahs,id',
-            'tanggal_selesai' => 'required|date',
+            'tanggal_selesai' => 'required|date|before_or_equal:today',
+            'status_hasil' => 'required|in:berhasil,gagal,partial',
             'jumlah_berhasil_dikelola' => 'required|numeric|min:0',
             'jumlah_residu' => 'nullable|numeric|min:0',
-            'status_hasil' => 'required|in:berhasil,partial,gagal',
-            'keterangan' => 'nullable|string',
-            'dokumentasi.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
+            'metode_disposal_akhir' => 'nullable|string|max:255',
+            'biaya_aktual' => 'nullable|numeric|min:0',
+            'nomor_sertifikat' => 'nullable|string|max:255',
+            'catatan_hasil' => 'nullable|string|max:2000',
+            'dokumentasi' => 'nullable|array|max:5', // Maksimal 5 file
+            'dokumentasi.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120' // 5MB per file
+        ], [
+            'dokumentasi.*.file' => 'Setiap dokumentasi harus berupa file.',
+            'dokumentasi.*.mimes' => 'Format file dokumentasi harus PDF, JPG, JPEG, atau PNG.',
+            'dokumentasi.*.max' => 'Ukuran file dokumentasi maksimal 5MB.',
+            'dokumentasi.max' => 'Maksimal 5 file dokumentasi dapat diupload.',
         ]);
 
         try {
@@ -176,24 +195,58 @@ class LaporanHasilPengelolaanController extends Controller
                     ->with('error', 'Laporan hasil pengelolaan untuk pengelolaan ini sudah ada.');
             }
 
-            $data = $request->only([
-                'pengelolaan_limbah_id', 'tanggal_selesai', 'jumlah_berhasil_dikelola',
-                'jumlah_residu', 'status_hasil', 'keterangan'
-            ]);
+            $data = [
+                'perusahaan_id' => $user->perusahaan->id,
+                'pengelolaan_limbah_id' => $request->pengelolaan_limbah_id,
+                'tanggal_selesai' => $request->tanggal_selesai,
+                'status_hasil' => $request->status_hasil,
+                'jumlah_berhasil_dikelola' => $request->jumlah_berhasil_dikelola,
+                'jumlah_residu' => $request->jumlah_residu,
+                'satuan' => $pengelolaanLimbah->satuan,
+                'metode_disposal_akhir' => $request->metode_disposal_akhir,
+                'biaya_aktual' => $request->biaya_aktual,
+                'nomor_sertifikat' => $request->nomor_sertifikat,
+                'catatan_hasil' => $request->catatan_hasil,
+            ];
 
-            $data['perusahaan_id'] = $user->perusahaan->id;
-            $data['satuan'] = $pengelolaanLimbah->satuan;
-
-            // Handle file uploads
+            // Handle file uploads dengan perbaikan
+            $dokumentasi = [];
             if ($request->hasFile('dokumentasi')) {
-                $dokumentasi = [];
-                foreach ($request->file('dokumentasi') as $file) {
-                    $path = $file->store('laporan-hasil-pengelolaan', 'public');
-                    $dokumentasi[] = $path;
+                $files = $request->file('dokumentasi');
+                
+                // Pastikan $files adalah array
+                if (!is_array($files)) {
+                    $files = [$files];
                 }
-                $data['dokumentasi'] = json_encode($dokumentasi);
+                
+                foreach ($files as $index => $file) {
+                    // Cek apakah file valid dan tidak null
+                    if ($file && $file->isValid()) {
+                        try {
+                            // Generate nama file yang unik
+                            $originalName = $file->getClientOriginalName();
+                            $extension = $file->getClientOriginalExtension();
+                            $filename = time() . '_' . $index . '_' . uniqid() . '.' . $extension;
+                            
+                            // Simpan file
+                            $path = $file->storeAs('laporan-hasil-pengelolaan', $filename, 'public');
+                            
+                            if ($path) {
+                                $dokumentasi[] = $path;
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error('Error uploading file: ' . $e->getMessage());
+                            // Lanjutkan dengan file lainnya
+                            continue;
+                        }
+                    }
+                }
             }
+            
+            // Simpan path dokumentasi sebagai JSON jika ada file yang berhasil diupload
+            $data['dokumentasi'] = !empty($dokumentasi) ? json_encode($dokumentasi) : null;
 
+            // efisiensi_pengelolaan will be auto-calculated in model boot
             LaporanHasilPengelolaan::create($data);
 
             DB::commit();
@@ -203,6 +256,15 @@ class LaporanHasilPengelolaanController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+            
+            // Hapus file yang sudah diupload jika terjadi error
+            if (!empty($dokumentasi)) {
+                foreach ($dokumentasi as $filePath) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+            
+            \Log::error('Error creating laporan hasil pengelolaan: ' . $e->getMessage());
             return back()->withInput()
                 ->with('error', 'Gagal menambahkan laporan: ' . $e->getMessage());
         }
@@ -275,45 +337,114 @@ class LaporanHasilPengelolaanController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk mengupdate laporan ini.');
         }
 
+        // Validasi dengan perbaikan untuk dokumentasi
         $request->validate([
-            'tanggal_selesai' => 'required|date',
+            'tanggal_selesai' => 'required|date|before_or_equal:today',
+            'status_hasil' => 'required|in:berhasil,gagal,partial',
             'jumlah_berhasil_dikelola' => 'required|numeric|min:0',
             'jumlah_residu' => 'nullable|numeric|min:0',
-            'status_hasil' => 'required|in:berhasil,partial,gagal',
-            'keterangan' => 'nullable|string',
-            'dokumentasi.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120'
+            'metode_disposal_akhir' => 'nullable|string|max:255',
+            'biaya_aktual' => 'nullable|numeric|min:0',
+            'nomor_sertifikat' => 'nullable|string|max:255',
+            'catatan_hasil' => 'nullable|string|max:2000',
+            'dokumentasi' => 'nullable|array|max:5', // Maksimal 5 file
+            'dokumentasi.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB per file
+            'hapus_dokumentasi' => 'nullable|boolean' // Untuk menghapus dokumentasi lama
+        ], [
+            'dokumentasi.*.file' => 'Setiap dokumentasi harus berupa file.',
+            'dokumentasi.*.mimes' => 'Format file dokumentasi harus PDF, JPG, JPEG, atau PNG.',
+            'dokumentasi.*.max' => 'Ukuran file dokumentasi maksimal 5MB.',
+            'dokumentasi.max' => 'Maksimal 5 file dokumentasi dapat diupload.',
         ]);
 
         try {
-            $data = $request->only([
-                'tanggal_selesai', 'jumlah_berhasil_dikelola',
-                'jumlah_residu', 'status_hasil', 'keterangan'
-            ]);
+            // Always update satuan if pengelolaan_limbah_id changes
+            $pengelolaanLimbah = PengelolaanLimbah::where('id', $laporanHasilPengelolaan->pengelolaan_limbah_id)
+                ->where('perusahaan_id', $user->perusahaan->id)
+                ->where('status', 'selesai')
+                ->first();
+                
+            if (!$pengelolaanLimbah) {
+                return back()->withInput()->with('error', 'Pengelolaan limbah tidak valid atau belum selesai.');
+            }
 
-            // Handle file uploads
+            $data = [
+                'tanggal_selesai' => $request->tanggal_selesai,
+                'status_hasil' => $request->status_hasil,
+                'jumlah_berhasil_dikelola' => $request->jumlah_berhasil_dikelola,
+                'jumlah_residu' => $request->jumlah_residu,
+                'satuan' => $pengelolaanLimbah->satuan,
+                'metode_disposal_akhir' => $request->metode_disposal_akhir,
+                'biaya_aktual' => $request->biaya_aktual,
+                'nomor_sertifikat' => $request->nomor_sertifikat,
+                'catatan_hasil' => $request->catatan_hasil,
+            ];
+
+            // Handle file uploads (replace old files atau tambah baru)
+            $oldFiles = [];
+            if ($laporanHasilPengelolaan->dokumentasi) {
+                $oldFiles = json_decode($laporanHasilPengelolaan->dokumentasi, true) ?: [];
+            }
+
+            // Jika ada request untuk menghapus dokumentasi lama
+            if ($request->has('hapus_dokumentasi') && $request->hapus_dokumentasi) {
+                // Hapus file lama dari storage
+                foreach ($oldFiles as $file) {
+                    Storage::disk('public')->delete($file);
+                }
+                $oldFiles = [];
+            }
+
+            // Handle upload file baru
             if ($request->hasFile('dokumentasi')) {
-                // Delete old files
-                if ($laporanHasilPengelolaan->dokumentasi) {
-                    $oldFiles = json_decode($laporanHasilPengelolaan->dokumentasi, true);
-                    foreach ($oldFiles as $file) {
-                        Storage::disk('public')->delete($file);
+                $newFiles = [];
+                $files = $request->file('dokumentasi');
+                
+                // Pastikan $files adalah array
+                if (!is_array($files)) {
+                    $files = [$files];
+                }
+                
+                foreach ($files as $index => $file) {
+                    // Cek apakah file valid dan tidak null
+                    if ($file && $file->isValid()) {
+                        try {
+                            // Generate nama file yang unik
+                            $originalName = $file->getClientOriginalName();
+                            $extension = $file->getClientOriginalExtension();
+                            $filename = time() . '_' . $index . '_' . uniqid() . '.' . $extension;
+                            
+                            // Simpan file
+                            $path = $file->storeAs('laporan-hasil-pengelolaan', $filename, 'public');
+                            
+                            if ($path) {
+                                $newFiles[] = $path;
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error('Error uploading file: ' . $e->getMessage());
+                            // Lanjutkan dengan file lainnya
+                            continue;
+                        }
                     }
                 }
-
-                $dokumentasi = [];
-                foreach ($request->file('dokumentasi') as $file) {
-                    $path = $file->store('laporan-hasil-pengelolaan', 'public');
-                    $dokumentasi[] = $path;
+                
+                // Jika mode replace (hapus dokumentasi lama dicentang), gunakan file baru saja
+                if ($request->has('hapus_dokumentasi') && $request->hapus_dokumentasi) {
+                    $data['dokumentasi'] = !empty($newFiles) ? json_encode($newFiles) : null;
+                } else {
+                    // Jika mode tambah, gabungkan dengan file lama
+                    $allFiles = array_merge($oldFiles, $newFiles);
+                    $data['dokumentasi'] = !empty($allFiles) ? json_encode($allFiles) : null;
                 }
-                $data['dokumentasi'] = json_encode($dokumentasi);
             }
 
             $laporanHasilPengelolaan->update($data);
 
-            return redirect()->route('laporan-hasil-pengelolaan.show', $laporanHasilPengelolaan)
+            return redirect()->route('laporan-hasil-pengelolaan.index', $laporanHasilPengelolaan)
                 ->with('success', 'Laporan hasil pengelolaan berhasil diperbarui.');
 
         } catch (\Exception $e) {
+            \Log::error('Error updating laporan hasil pengelolaan: ' . $e->getMessage());
             return back()->withInput()
                 ->with('error', 'Gagal memperbarui laporan: ' . $e->getMessage());
         }
@@ -334,9 +465,14 @@ class LaporanHasilPengelolaanController extends Controller
         try {
             // Delete uploaded files
             if ($laporanHasilPengelolaan->dokumentasi) {
-                $files = json_decode($laporanHasilPengelolaan->dokumentasi, true);
-                foreach ($files as $file) {
-                    Storage::disk('public')->delete($file);
+                $files = $laporanHasilPengelolaan->dokumentasi;
+                if (is_string($files)) {
+                    $files = json_decode($files, true);
+                }
+                if (is_array($files)) {
+                    foreach ($files as $file) {
+                        Storage::disk('public')->delete($file);
+                    }
                 }
             }
 
@@ -369,7 +505,7 @@ class LaporanHasilPengelolaanController extends Controller
 
         $files = json_decode($laporanHasilPengelolaan->dokumentasi, true);
         
-        if (!isset($files[$index])) {
+        if (!is_array($files) || !isset($files[$index])) {
             abort(404, 'File tidak ditemukan.');
         }
 
@@ -379,7 +515,10 @@ class LaporanHasilPengelolaanController extends Controller
             abort(404, 'File tidak ditemukan di storage.');
         }
 
-        return Storage::disk('public')->download($filePath);
+        // Get original filename untuk download
+        $originalName = basename($filePath);
+        
+        return Storage::disk('public')->download($filePath, $originalName);
     }
 
     /**
@@ -438,7 +577,7 @@ class LaporanHasilPengelolaanController extends Controller
                 'Jumlah Residu',
                 'Status Hasil',
                 'Vendor',
-                'Keterangan'
+                'Catatan Hasil'
             ];
 
             // Tambah kolom perusahaan untuk admin
@@ -457,7 +596,7 @@ class LaporanHasilPengelolaanController extends Controller
                     number_format($item->jumlah_residu ?? 0, 2) . ' ' . $item->satuan,
                     ucfirst(str_replace('_', ' ', $item->status_hasil)),
                     $item->pengelolaanLimbah->vendor->nama_perusahaan ?? '-',
-                    $item->keterangan ?? '-'
+                    $item->catatan_hasil ?? '-'
                 ];
 
                 // Tambah data perusahaan untuk admin
@@ -477,63 +616,7 @@ class LaporanHasilPengelolaanController extends Controller
     /**
      * Dashboard/Summary data
      */
-    public function dashboard()
-    {
-        $user = Auth::user();
-
-        if ($user->isPerusahaan() && !$user->hasValidPerusahaan()) {
-            return redirect()->route('perusahaan.create')
-                ->with('info', 'Silakan lengkapi profil perusahaan Anda terlebih dahulu.');
-        }
-
-        // Base query
-        $query = LaporanHasilPengelolaan::query();
-
-        // Filter berdasarkan role
-        if ($user->isPerusahaan()) {
-            $query->where('perusahaan_id', $user->perusahaan->id);
-        }
-
-        // Summary statistics
-        $totalLaporan = $query->count();
-        $laporanBerhasil = (clone $query)->where('status_hasil', 'berhasil')->count();
-        $laporanPartial = (clone $query)->where('status_hasil', 'partial')->count();
-        $laporanGagal = (clone $query)->where('status_hasil', 'gagal')->count();
-
-        // Recent reports
-        $recentReports = (clone $query)->with([
-                'pengelolaanLimbah.jenisLimbah',
-                'perusahaan'
-            ])
-            ->latest('tanggal_selesai')
-            ->take(5)
-            ->get();
-
-        // Monthly statistics for chart
-        $monthlyStats = (clone $query)
-            ->selectRaw('MONTH(tanggal_selesai) as month, COUNT(*) as total')
-            ->whereYear('tanggal_selesai', date('Y'))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->pluck('total', 'month')
-            ->toArray();
-
-        // Fill missing months with 0
-        $monthlyData = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $monthlyData[$i] = $monthlyStats[$i] ?? 0;
-        }
-
-        return view('laporan-hasil-pengelolaan.dashboard', compact(
-            'totalLaporan',
-            'laporanBerhasil',
-            'laporanPartial',
-            'laporanGagal',
-            'recentReports',
-            'monthlyData'
-        ));
-    }
+    
 
     /**
      * Get pengelolaan limbah yang bisa dibuat laporan hasil (AJAX)
@@ -597,9 +680,14 @@ class LaporanHasilPengelolaanController extends Controller
                     foreach ($selectedItems as $item) {
                         // Delete uploaded files
                         if ($item->dokumentasi) {
-                            $files = json_decode($item->dokumentasi, true);
-                            foreach ($files as $file) {
-                                Storage::disk('public')->delete($file);
+                            $files = $item->dokumentasi;
+                            if (is_string($files)) {
+                                $files = json_decode($files, true);
+                            }
+                            if (is_array($files)) {
+                                foreach ($files as $file) {
+                                    Storage::disk('public')->delete($file);
+                                }
                             }
                         }
                         $item->delete();

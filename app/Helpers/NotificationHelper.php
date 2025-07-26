@@ -2,75 +2,107 @@
 
 namespace App\Helpers;
 
-use App\Models\Notification;
 use App\Models\User;
-use App\Events\NotificationSent;
+use App\Models\Notification;
+use App\Models\Perusahaan;
+use App\Models\LaporanHarian;
+use App\Models\PengelolaanLimbah;
+use App\Models\Penyimpanan;
 
 class NotificationHelper
 {
-    public static function create($userId, $title, $message, $type = 'info', $actionUrl = null)
+    /**
+     * Send notification to user
+     */
+    public static function notifyUser(User $user, string $title, string $message, string $type = 'info', string $actionUrl = null, array $data = null)
     {
-        return Notification::create([
-            'user_id' => $userId,
-            'title' => $title,
-            'message' => $message,
-            'type' => $type,
-            'action_url' => $actionUrl
-        ]);
-        event(new NotificationSent($notification));
-
-        return $notification;
+        return Notification::createForUser(
+            $user->id,
+            $title,
+            $message,
+            $type,
+            $actionUrl,
+            $data
+        );
     }
 
-    public static function notifyUser($user, $title, $message, $type = 'info', $actionUrl = null)
-    {
-        if ($user instanceof User) {
-            return self::create($user->id, $title, $message, $type, $actionUrl);
-        }
-        return null;
-    }
-
-    public static function notifyAdmins($title, $message, $type = 'info', $actionUrl = null)
+    /**
+     * Send notification to all admins
+     */
+    public static function notifyAdmins(string $title, string $message, string $type = 'info', string $actionUrl = null, array $data = null)
     {
         $admins = User::where('role', 'admin')->get();
+        
         foreach ($admins as $admin) {
-            self::notifyUser($admin, $title, $message, $type, $actionUrl);
+            self::notifyUser($admin, $title, $message, $type, $actionUrl, $data);
         }
     }
 
-    // Notifikasi untuk aktivitas perusahaan
-    public static function perusahaanRegistered($perusahaan)
+    /**
+     * Notification when new perusahaan registers
+     */
+    public static function perusahaanRegistered(Perusahaan $perusahaan)
     {
         self::notifyAdmins(
             'Perusahaan Baru Terdaftar',
-            "Perusahaan {$perusahaan->nama_perusahaan} telah mendaftar di sistem",
+            "Perusahaan {$perusahaan->nama_perusahaan} telah mendaftar dan memerlukan verifikasi",
             'info',
-            route('perusahaan.show', $perusahaan)
+            route('admin.perusahaan.show', $perusahaan),
+            ['perusahaan_id' => $perusahaan->id]
         );
     }
 
-    public static function perusahaanUpdated($perusahaan)
+    /**
+     * Welcome notification for new user
+     */
+    public static function welcomeNewUser(User $user)
     {
-        self::notifyAdmins(
+        $message = $user->isPerusahaan() 
+            ? 'Selamat datang di EcoCycle! Silakan lengkapi profil perusahaan Anda untuk memulai.'
+            : 'Selamat datang di EcoCycle! Akun Anda telah berhasil dibuat.';
+            
+        $actionUrl = $user->isPerusahaan() 
+            ? route('perusahaan.dashboard')
+            : route('profile.edit');
+
+        self::notifyUser(
+            $user,
+            'Selamat Datang!',
+            $message,
+            'success',
+            $actionUrl
+        );
+    }
+
+    /**
+     * Notification when perusahaan profile is updated
+     */
+    public static function perusahaanUpdated(Perusahaan $perusahaan)
+    {
+        self::notifyUser(
+            $perusahaan->user,
             'Profil Perusahaan Diperbarui',
-            "Perusahaan {$perusahaan->nama_perusahaan} telah memperbarui profil mereka",
-            'info',
+            'Profil perusahaan Anda telah berhasil diperbarui',
+            'success',
             route('perusahaan.show', $perusahaan)
         );
     }
 
-    // Notifikasi untuk laporan harian
-    public static function laporanHarianSubmitted($laporan)
+    /**
+     * Notification when laporan harian is submitted
+     */
+    public static function laporanHarianSubmitted(LaporanHarian $laporan)
     {
-        // Notifikasi ke admin
+        // Notify admins
         self::notifyAdmins(
             'Laporan Harian Baru',
             "Laporan harian dari {$laporan->perusahaan->nama_perusahaan} untuk {$laporan->jenisLimbah->nama} telah disubmit",
             'info',
-            route('laporan-harian.show', $laporan)
+            route('laporan-harian.show', $laporan),
+            ['laporan_id' => $laporan->id]
         );
 
-        // Notifikasi ke perusahaan
+        // Notify perusahaan
         self::notifyUser(
             $laporan->perusahaan->user,
             'Laporan Harian Berhasil Disubmit',
@@ -80,7 +112,10 @@ class NotificationHelper
         );
     }
 
-    public static function laporanHarianOverdue($perusahaan)
+    /**
+     * Notification for overdue laporan harian
+     */
+    public static function laporanHarianOverdue(Perusahaan $perusahaan)
     {
         self::notifyUser(
             $perusahaan->user,
@@ -89,194 +124,116 @@ class NotificationHelper
             'warning',
             route('laporan-harian.create')
         );
-
-        // Notifikasi ke admin juga
-        self::notifyAdmins(
-            'Perusahaan Belum Laporan Harian',
-            "Perusahaan {$perusahaan->nama_perusahaan} belum mengisi laporan harian hari ini",
-            'warning',
-            route('perusahaan.show', $perusahaan)
-        );
     }
 
-    // Notifikasi untuk pengelolaan limbah
-    public static function pengelolaanCreated($pengelolaan)
-    {
-        self::notifyAdmins(
-            'Pengelolaan Limbah Baru',
-            "Pengelolaan limbah {$pengelolaan->jenisLimbah->nama} oleh {$pengelolaan->perusahaan->nama_perusahaan} telah dibuat",
-            'info',
-            route('admin.pengelolaan-limbah.show', $pengelolaan)
-        );
-
-        self::notifyUser(
-            $pengelolaan->perusahaan->user,
-            'Pengelolaan Limbah Dibuat',
-            "Pengelolaan limbah {$pengelolaan->jenisLimbah->nama} dengan nomor manifest {$pengelolaan->nomor_manifest} telah berhasil dibuat",
-            'success',
-            route('pengelolaan-limbah.show', $pengelolaan)
-        );
-    }
-
-    public static function pengelolaanStatusChanged($pengelolaan, $oldStatus)
-    {
-        $statusText = [
-            'menunggu' => 'Menunggu',
-            'diproses' => 'Sedang Diproses',
-            'dalam_pengangkutan' => 'Dalam Pengangkutan',
-            'selesai' => 'Selesai'
-        ];
-
-        $message = "Status pengelolaan limbah {$pengelolaan->jenisLimbah->nama} berubah dari {$statusText[$oldStatus]} menjadi {$statusText[$pengelolaan->status]}";
-
-        self::notifyUser(
-            $pengelolaan->perusahaan->user,
-            'Status Pengelolaan Berubah',
-            $message,
-            $pengelolaan->status === 'selesai' ? 'success' : 'info',
-            route('pengelolaan-limbah.show', $pengelolaan)
-        );
-
-        if ($pengelolaan->status === 'selesai') {
-            self::notifyUser(
-                $pengelolaan->perusahaan->user,
-                'Pengelolaan Selesai - Buat Laporan Hasil',
-                "Pengelolaan {$pengelolaan->jenisLimbah->nama} telah selesai. Silakan buat laporan hasil pengelolaan.",
-                'info',
-                route('laporan-hasil-pengelolaan.create', ['pengelolaan' => $pengelolaan->id])
-            );
-        }
-    }
-
-    public static function pengelolaanOverdue($pengelolaan)
-    {
-        self::notifyUser(
-            $pengelolaan->perusahaan->user,
-            'Pengelolaan Limbah Terlambat',
-            "Pengelolaan {$pengelolaan->jenisLimbah->nama} sudah berjalan lebih dari 30 hari tanpa update status",
-            'warning',
-            route('pengelolaan-limbah.show', $pengelolaan)
-        );
-
-        self::notifyAdmins(
-            'Pengelolaan Limbah Terlambat',
-            "Pengelolaan limbah {$pengelolaan->jenisLimbah->nama} oleh {$pengelolaan->perusahaan->nama_perusahaan} sudah terlambat",
-            'warning',
-            route('admin.pengelolaan-limbah.show', $pengelolaan)
-        );
-    }
-
-    // Notifikasi untuk laporan hasil pengelolaan
-    public static function laporanHasilSubmitted($laporanHasil)
-    {
-        self::notifyAdmins(
-            'Laporan Hasil Pengelolaan Baru',
-            "Laporan hasil pengelolaan dari {$laporanHasil->perusahaan->nama_perusahaan} telah disubmit",
-            'info',
-            route('admin.laporan-hasil-pengelolaan.show', $laporanHasil)
-        );
-
-        self::notifyUser(
-            $laporanHasil->perusahaan->user,
-            'Laporan Hasil Berhasil Disubmit',
-            "Laporan hasil pengelolaan untuk {$laporanHasil->jenisLimbah->nama} telah berhasil disubmit",
-            'success',
-            route('laporan-hasil-pengelolaan.show', $laporanHasil)
-        );
-    }
-
-    // Notifikasi untuk penyimpanan
-    public static function penyimpananFull($penyimpanan)
+    /**
+     * Notification when penyimpanan is nearly full
+     */
+    public static function penyimpananFull(Penyimpanan $penyimpanan)
     {
         $percentage = ($penyimpanan->kapasitas_terpakai / $penyimpanan->kapasitas_maksimal) * 100;
         
+        $title = $percentage >= 95 ? 'Penyimpanan Penuh!' : 'Penyimpanan Hampir Penuh';
+        $type = $percentage >= 95 ? 'danger' : 'warning';
+        
         self::notifyUser(
             $penyimpanan->perusahaan->user,
-            'Penyimpanan Hampir Penuh',
-            "Penyimpanan {$penyimpanan->nama_penyimpanan} sudah mencapai {$percentage}% kapasitas. Segera lakukan pengelolaan limbah.",
-            'warning',
+            $title,
+            "Penyimpanan {$penyimpanan->nama_penyimpanan} sudah terisi {$percentage}%. Segera lakukan pengelolaan limbah.",
+            $type,
             route('penyimpanan.show', $penyimpanan)
         );
-
     }
 
-    // Notifikasi untuk vendor
-    public static function vendorRegistered($vendor)
+    /**
+     * Notification when pengelolaan limbah is created
+     */
+    public static function pengelolaanCreated(PengelolaanLimbah $pengelolaan)
     {
-        self::notifyAdmins(
-            'Vendor Baru Terdaftar',
-            "Vendor {$vendor->nama_vendor} telah terdaftar di sistem",
+        self::notifyUser(
+            $pengelolaan->perusahaan->user,
+            'Pengelolaan Limbah Dimulai',
+            "Pengelolaan {$pengelolaan->jenisLimbah->nama} sebanyak {$pengelolaan->jumlah_dikelola} {$pengelolaan->satuan} telah dimulai",
             'info',
-            route('admin.vendor.show', $vendor)
+            route('pengelolaan-limbah.show', $pengelolaan)
+        );
+
+        // Notify admins
+        self::notifyAdmins(
+            'Pengelolaan Limbah Baru',
+            "Pengelolaan limbah baru dari {$pengelolaan->perusahaan->nama_perusahaan}",
+            'info',
+            route('pengelolaan-limbah.show', $pengelolaan)
         );
     }
 
-    // Notifikasi untuk artikel
-    public static function artikelPublished($artikel)
+    /**
+     * Notification when pengelolaan limbah is completed
+     */
+    public static function pengelolaanCompleted(PengelolaanLimbah $pengelolaan)
     {
-        // Notifikasi ke semua perusahaan
-        $perusahaans = User::where('role', 'perusahaan')->get();
-        foreach ($perusahaans as $user) {
-            self::notifyUser(
-                $user,
-                'Artikel Baru Dipublikasikan',
-                "Artikel baru '{$artikel->judul}' telah dipublikasikan",
-                'info',
-                route('frontend.artikel.show', $artikel->slug)
-            );
-        }
+        self::notifyUser(
+            $pengelolaan->perusahaan->user,
+            'Pengelolaan Limbah Selesai',
+            "Pengelolaan {$pengelolaan->jenisLimbah->nama} telah selesai. Silakan buat laporan hasil pengelolaan.",
+            'success',
+            route('laporan-hasil-pengelolaan.create')
+        );
     }
 
-    // Notifikasi sistem
-    public static function systemMaintenance($message, $scheduledTime = null)
+    /**
+     * Notification for system maintenance
+     */
+    public static function systemMaintenance(string $message, \DateTime $scheduledTime = null)
     {
         $allUsers = User::all();
-        $maintenanceMessage = $scheduledTime 
-            ? "Sistem akan maintenance pada {$scheduledTime}. {$message}"
-            : "Pemberitahuan sistem: {$message}";
+        
+        $title = 'Pemeliharaan Sistem';
+        $fullMessage = $scheduledTime 
+            ? "Sistem akan menjalani pemeliharaan pada {$scheduledTime->format('d/m/Y H:i')}. {$message}"
+            : $message;
 
         foreach ($allUsers as $user) {
             self::notifyUser(
                 $user,
-                'Pemberitahuan Sistem',
-                $maintenanceMessage,
+                $title,
+                $fullMessage,
                 'warning'
             );
         }
     }
 
-    public static function welcomeNewUser($user)
+    /**
+     * Notification for low storage capacity across all perusahaan
+     */
+    public static function checkAllPenyimpananCapacity()
     {
-        $role = $user->role === 'perusahaan' ? 'Perusahaan' : 'Admin';
-        
-        self::notifyUser(
-            $user,
-            "Selamat Datang di EcoCycle",
-            "Selamat datang di sistem EcoCycle! Sebagai {$role}, Anda dapat mulai menggunakan fitur-fitur yang tersedia.",
-            'success',
-            $user->role === 'perusahaan' ? route('perusahaan.dashboard') : route('admin.dashboard')
-        );
+        $fullPenyimpanans = Penyimpanan::whereRaw('(kapasitas_terpakai / kapasitas_maksimal) >= 0.9')
+            ->with('perusahaan.user')
+            ->get();
+
+        foreach ($fullPenyimpanans as $penyimpanan) {
+            self::penyimpananFull($penyimpanan);
+        }
     }
 
-    // Notifikasi reminder
-    public static function monthlyReportReminder($perusahaan)
+    /**
+     * Daily reminder for companies without recent reports
+     */
+    public static function dailyReminderInactiveCompanies()
     {
-        self::notifyUser(
-            $perusahaan->user,
-            'Pengingat Laporan Bulanan',
-            'Saatnya untuk membuat laporan bulanan Anda. Pastikan semua data sudah lengkap.',
-            'info',
-            route('laporan-harian.index')
-        );
-    }
+        $inactiveCompanies = Perusahaan::whereDoesntHave('laporanHarian', function ($query) {
+            $query->where('created_at', '>=', now()->subDays(3));
+        })->with('user')->get();
 
-    public static function complianceReminder($perusahaan, $requirement)
-    {
-        self::notifyUser(
-            $perusahaan->user,
-            'Pengingat Kepatuhan',
-            "Pengingat: {$requirement}. Pastikan perusahaan Anda tetap mematuhi regulasi yang berlaku.",
-            'warning'
-        );
+        foreach ($inactiveCompanies as $perusahaan) {
+            self::notifyUser(
+                $perusahaan->user,
+                'Pengingat Aktivitas',
+                'Anda belum melaporkan aktivitas limbah dalam 3 hari terakhir. Jangan lupa untuk membuat laporan harian.',
+                'warning',
+                route('laporan-harian.create')
+            );
+        }
     }
 }

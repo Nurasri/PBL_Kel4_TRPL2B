@@ -14,6 +14,7 @@ use App\Http\Controllers\LaporanHarianController;
 use App\Http\Controllers\KategoriArtikelController;
 use App\Http\Controllers\PengelolaanLimbahController;
 use App\Http\Controllers\LaporanHasilPengelolaanController;
+use App\Http\Controllers\NotificationController;
 
 // Frontend routes (public access)
 Route::get('/', function () {
@@ -74,28 +75,40 @@ Route::middleware('auth')->group(function () {
         Route::get('/jenis-limbah/{jenisLimbah}', [JenisLimbahController::class, 'apiShow'])->name('jenis-limbah.show');
     });
 
-    Route::get('/laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');
-    Route::get('/laporan-harian/{laporanHarian}', [LaporanHarianController::class, 'show'])->name('laporan-harian.show');
-    // Update route untuk export
-    Route::get('/laporan-harian/export/pdf', [LaporanHarianController::class, 'export'])->name('laporan-harian.export');
-    Route::get('/laporan-harian/export/csv', [LaporanHarianController::class, 'exportCsv'])->name('laporan-harian.export-csv');
+    
 
     //Notifikasi routes
+//
+    // Notification routes
     Route::get('/notifications', function () {
-        $notifications = auth()->user()->notifications()->paginate(20);
+        $notifications = auth()->user()->customNotifications()->latest()->paginate(20);
         return view('notifications.index', compact('notifications'));
     })->name('notifications.index');
 
+    Route::delete('/notifications/{notification}', function (\App\Models\Notification $notification) {
+        if ($notification->user_id === auth()->id()) {
+            $notification->delete();
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['error' => 'Unauthorized'], 403);
+    })->name('notifications.destroy');
+
+    Route::delete('/notifications/delete-all', function () {
+        auth()->user()->customNotifications()->delete();
+        return response()->json(['success' => true]);
+    })->name('notifications.delete-all');
+
+    // API routes untuk notifikasi
     Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
         Route::get('/', function () {
-            $notifications = auth()->user()->notifications()
+            $notifications = auth()->user()->customNotifications()
                 ->latest()
                 ->take(10)
                 ->get();
 
             return response()->json([
                 'notifications' => $notifications,
-                'unread_count' => auth()->user()->unread_notification_count
+                'unread_count' => auth()->user()->unreadCustomNotifications()->count()
             ]);
         })->name('index');
 
@@ -108,7 +121,7 @@ Route::middleware('auth')->group(function () {
         })->name('read');
 
         Route::post('/mark-all-read', function () {
-            auth()->user()->notifications()->whereNull('read_at')->update(['read_at' => now()]);
+            auth()->user()->unreadCustomNotifications()->update(['read_at' => now()]);
             return response()->json(['success' => true]);
         })->name('mark-all-read');
     });
@@ -124,9 +137,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.password.update');
 
         // Perusahaan management
-        Route::get('/perusahaan', [PerusahaanController::class, 'adminIndex'])->name('perusahaan.index');
-        Route::get('/perusahaan/{perusahaan}', [PerusahaanController::class, 'adminShow'])->name('perusahaan.show');
         Route::get('/perusahaan', [PerusahaanController::class, 'index'])->name('perusahaan.index');
+        // Perusahaan show route (admin bisa lihat semua, perusahaan hanya miliknya)
+        Route::get('/perusahaan/{perusahaan}', [PerusahaanController::class, 'show'])->name('perusahaan.show');
         // Vendor management
         Route::resource('vendor', VendorController::class);
         Route::get('/vendor/create', [VendorController::class, 'create'])->name('vendor.create');
@@ -161,6 +174,7 @@ Route::middleware('auth')->group(function () {
             ->name('penyimpanan.update-kapasitas');
 
         // Laporan Harian
+        Route::resource('laporan-harian', LaporanHarianController::class);
         Route::get('/laporan-harian/create', [LaporanHarianController::class, 'create'])->name('laporan-harian.create');
         Route::post('/laporan-harian', [LaporanHarianController::class, 'store'])->name('laporan-harian.store');
         Route::get('/laporan-harian/{laporanHarian}/edit', [LaporanHarianController::class, 'edit'])->name('laporan-harian.edit');
@@ -200,12 +214,24 @@ Route::middleware('auth')->group(function () {
 
         // Laporan Hasil Pengelolaan
         Route::resource('laporan-hasil-pengelolaan', LaporanHasilPengelolaanController::class);
-        Route::get('/laporan-hasil-pengelolaan/export/csv', [LaporanHasilPengelolaanController::class, 'export'])
-            ->name('laporan-hasil-pengelolaan.export');
-        Route::get('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}/dokumentasi/{index}', [LaporanHasilPengelolaanController::class, 'downloadDokumentasi'])
-            ->name('laporan-hasil-pengelolaan.download-dokumentasi');
-        Route::post('/laporan-hasil-pengelolaan/bulk-action', [LaporanHasilPengelolaanController::class, 'bulkAction'])->name('laporan-hasil-pengelolaan.bulk-action');
-        // API endpoints
+        Route::get('/laporan-hasil-pengelolaan/create', [LaporanHasilPengelolaanController::class, 'create'])
+            ->name('laporan-hasil-pengelolaan.create');
+        
+        Route::post('/laporan-hasil-pengelolaan', [LaporanHasilPengelolaanController::class, 'store'])
+            ->name('laporan-hasil-pengelolaan.store');
+        
+        Route::get('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}/edit', [LaporanHasilPengelolaanController::class, 'edit'])
+            ->name('laporan-hasil-pengelolaan.edit');
+        
+        Route::put('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}', [LaporanHasilPengelolaanController::class, 'update'])
+            ->name('laporan-hasil-pengelolaan.update');
+        
+        Route::delete('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}', [LaporanHasilPengelolaanController::class, 'destroy'])
+            ->name('laporan-hasil-pengelolaan.destroy');
+        
+        Route::post('/laporan-hasil-pengelolaan/bulk-action', [LaporanHasilPengelolaanController::class, 'bulkAction'])
+            ->name('laporan-hasil-pengelolaan.bulk-action');
+        
         Route::get('/api/pengelolaan-selesai', [LaporanHasilPengelolaanController::class, 'getPengelolaanSelesai'])
             ->name('api.pengelolaan-selesai');
 
@@ -219,6 +245,25 @@ Route::middleware('auth')->group(function () {
         Route::get('/laporan-hasil-pengelolaan/summary/pdf', [LaporanHasilPengelolaanController::class, 'exportSummaryPdf'])
             ->name('laporan-hasil-pengelolaan.summary.pdf');
     });
+
+    Route::get('/laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');
+    Route::get('/laporan-harian/{laporanHarian}', [LaporanHarianController::class, 'show'])->name('laporan-harian.show');
+    // Update route untuk export
+    Route::get('/laporan-harian/export/pdf', [LaporanHarianController::class, 'export'])->name('laporan-harian.export');
+    Route::get('/laporan-harian/export/csv', [LaporanHarianController::class, 'exportCsv'])->name('laporan-harian.export-csv');
+
+    // Laporan hasil
+    Route::get('/laporan-hasil-pengelolaan', [LaporanHasilPengelolaanController::class, 'index'])
+        ->name('laporan-hasil-pengelolaan.index');
+    
+    Route::get('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}', [LaporanHasilPengelolaanController::class, 'show'])
+        ->name('laporan-hasil-pengelolaan.show');
+    
+    Route::get('/laporan-hasil-pengelolaan/export/csv', [LaporanHasilPengelolaanController::class, 'export'])
+        ->name('laporan-hasil-pengelolaan.export');
+    
+    Route::get('/laporan-hasil-pengelolaan/{laporanHasilPengelolaan}/dokumentasi/{index}', [LaporanHasilPengelolaanController::class, 'downloadDokumentasi'])
+        ->name('laporan-hasil-pengelolaan.download-dokumentasi');
 
     // User management routes (accessible by admin only)
     Route::middleware('admin')->group(function () {

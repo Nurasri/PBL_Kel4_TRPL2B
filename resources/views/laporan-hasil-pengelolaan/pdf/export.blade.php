@@ -98,7 +98,7 @@
             font-size: 8px;
         }
 
-        .status-sebagian {
+        .status-partial {
             background-color: #fff3cd;
             color: #856404;
             padding: 2px 6px;
@@ -197,7 +197,7 @@
             <div class="stat-label">Berhasil</div>
         </div>
         <div class="stat-box">
-            <div class="stat-number">{{ $total_sebagian }}</div>
+            <div class="stat-number">{{ $total_partial }}</div>
             <div class="stat-label">Sebagian Berhasil</div>
         </div>
         <div class="stat-box">
@@ -277,13 +277,13 @@
                         @php
                             $statusClass = match ($item->status_hasil) {
                                 'berhasil' => 'status-berhasil',
-                                'sebagian_berhasil' => 'status-sebagian',
+                                'partial' => 'status-sebagian',
                                 'gagal' => 'status-gagal',
                                 default => ''
                             };
                             $statusName = match ($item->status_hasil) {
                                 'berhasil' => 'Berhasil',
-                                'sebagian_berhasil' => 'Sebagian Berhasil',
+                                'partial' => 'Berhasil sebagian',
                                 'gagal' => 'Gagal',
                                 default => ucfirst($item->status_hasil)
                             };

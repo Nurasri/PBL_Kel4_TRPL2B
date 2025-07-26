@@ -103,7 +103,7 @@ class KategoriArtikelController extends Controller
         try {
             $kategoriArtikel->update($request->all());
 
-            return redirect()->route('kategori-artikel.show', $kategoriArtikel)
+            return redirect()->route('kategori-artikel.index', $kategoriArtikel)
                 ->with('success', 'Kategori artikel berhasil diperbarui.');
         } catch (\Exception $e) {
             return back()->withInput()

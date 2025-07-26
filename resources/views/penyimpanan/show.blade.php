@@ -70,8 +70,8 @@
                                 @endif
                             </div>
                         </div>
-                    </x-card>
-                @endif
+                    </div>
+                </x-card>
 
                 <!-- Info Tambahan -->
                 <x-card>

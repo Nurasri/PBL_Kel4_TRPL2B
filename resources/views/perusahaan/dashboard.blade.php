@@ -215,46 +215,71 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
-            <h4 class="mb-4 font-semibold text-gray-700 dark:text-gray-300">
-                Aksi Cepat
-            </h4>
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <a href="{{ route('laporan-harian.create') }}"
-                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
-                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Buat Laporan Harian
-                </a>
-                <a href="{{ route('pengelolaan-limbah.create') }}"
-                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
-                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                        </path>
-                    </svg>
-                    Kelola Limbah
-                </a>
-                <a href="{{ route('laporan-hasil-pengelolaan.create') }}"
-                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
-                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Laporan Hasil
-                </a>
-                <a href="{{ route('penyimpanan.create') }}"
-                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
-                    <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                    Tambah Penyimpanan
-                </a>
+        <!-- Charts Section -->
+        <div class="grid gap-6 mb-8 md:grid-cols-2">
+            <!-- Chart: Laporan Harian per Jenis Limbah -->
+            <div class="px-4 py-3 bg-white rounded-lg shadow-md dark:bg-gray-800">
+                <h4 class="mb-4 font-semibold text-gray-700 dark:text-gray-300">
+                    Laporan Harian per Jenis Limbah
+                </h4>
+                <canvas id="chart-laporan-harian-jenis-limbah" height="220"></canvas>
+            </div>
+            <!-- Status Distribution Chart (tetap tampil) -->
+            <div class="px-4 py-3 bg-white rounded-lg shadow-md dark:bg-gray-800">
+                <h4 class="mb-4 font-semibold text-gray-700 dark:text-gray-300">
+                    Distribusi Status Laporan Hasil
+                </h4>
+                @if($total_laporan_hasil > 0)
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Berhasil</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-900 dark:text-gray-100 mr-2">{{ $laporan_berhasil }}</span>
+                                <div class="w-20 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ ($laporan_berhasil / $total_laporan_hasil) * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Sebagian Berhasil</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-900 dark:text-gray-100 mr-2">{{ $laporan_partial }}</span>
+                                <div class="w-20 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ ($laporan_partial / $total_laporan_hasil) * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Gagal</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-900 dark:text-gray-100 mr-2">{{ $laporan_gagal }}</span>
+                                <div class="w-20 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-red-500 h-2 rounded-full" style="width: {{ ($laporan_gagal / $total_laporan_hasil) * 100 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <p class="text-gray-500 dark:text-gray-400">Belum ada data laporan hasil</p>
+                    </div>
+                @endif
             </div>
         </div>
+
+        
 
         <!-- Recent Activities -->
         <div class="grid gap-6 mb-8 md:grid-cols-2">
@@ -441,112 +466,60 @@
             </div>
         @endif
 
-        <!-- Charts Section -->
-        <div class="grid gap-6 mb-8 md:grid-cols-2">
-            <!-- Status Distribution Chart -->
-            <div class="px-4 py-3 bg-white rounded-lg shadow-md dark:bg-gray-800">
-                <h4 class="mb-4 font-semibold text-gray-700 dark:text-gray-300">
-                    Distribusi Status Laporan Hasil
-                </h4>
-                @if($total_laporan_hasil > 0)
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
-                                <span class="text-sm text-gray-700 dark:text-gray-300">Berhasil</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span
-                                    class="text-sm font-medium text-gray-900 dark:text-gray-100 mr-2">{{ $laporan_berhasil }}</span>
-                                <div class="w-20 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-green-500 h-2 rounded-full"
-                                        style="width: {{ ($laporan_berhasil / $total_laporan_hasil) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
-                                <span class="text-sm text-gray-700 dark:text-gray-300">Sebagian Berhasil</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span
-                                    class="text-sm font-medium text-gray-900 dark:text-gray-100 mr-2">{{ $laporan_partial }}</span>
-                                <div class="w-20 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-yellow-500 h-2 rounded-full"
-                                        style="width: {{ ($laporan_partial / $total_laporan_hasil) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
-                                <span class="text-sm text-gray-700 dark:text-gray-300">Gagal</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span
-                                    class="text-sm font-medium text-gray-900 dark:text-gray-100 mr-2">{{ $laporan_gagal }}</span>
-                                <div class="w-20 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-red-500 h-2 rounded-full"
-                                        style="width: {{ ($laporan_gagal / $total_laporan_hasil) * 100 }}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <div class="text-center py-8">
-                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                            </path>
-                        </svg>
-                        <p class="text-gray-500 dark:text-gray-400">Belum ada data laporan hasil</p>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Monthly Trend -->
-            <div class="px-4 py-3 bg-white rounded-lg shadow-md dark:bg-gray-800">
-                <h4 class="mb-4 font-semibold text-gray-700 dark:text-gray-300">
-                    Tren Bulanan (6 Bulan Terakhir)
-                </h4>
-                @if($monthly_trend->count() > 0)
-                    <div class="space-y-3">
-                        @foreach($monthly_trend as $trend)
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ \Carbon\Carbon::createFromFormat('Y-m', $trend->month)->format('M Y') }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400 mr-2">
-                                        {{ $trend->total_laporan }} laporan
-                                    </span>
-                                    <div class="w-24 bg-gray-200 rounded-full h-2">
-                                        @php
-                                            $maxTrend = $monthly_trend->max('total_laporan');
-                                            $percentage = $maxTrend > 0 ? ($trend->total_laporan / $maxTrend) * 100 : 0;
-                                        @endphp
-                                        <div class="bg-blue-500 h-2 rounded-full" style="width: {{ $percentage }}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-8">
-                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
-                        </svg>
-                        <p class="text-gray-500 dark:text-gray-400">Belum ada data tren</p>
-                    </div>
-                @endif
+        <!-- Quick Actions -->
+        <div class="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
+            <h4 class="mb-4 font-semibold text-gray-700 dark:text-gray-300">
+                Aksi Cepat
+            </h4>
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <a href="{{ route('laporan-harian.create') }}"
+                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Buat Laporan Harian
+                </a>
+                <a href="{{ route('pengelolaan-limbah.create') }}"
+                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                    </svg>
+                    Kelola Limbah
+                </a>
+                <a href="{{ route('laporan-hasil-pengelolaan.create') }}"
+                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Laporan Hasil
+                </a>
+                <a href="{{ route('penyimpanan.create') }}"
+                    class="flex items-center p-3 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Tambah Penyimpanan
+                </a>
             </div>
         </div>
+        
+
+<!-- Chart.js & chart-laporan-harian.js -->
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Data for chart: Laporan Harian per Jenis Limbah
+        window.laporanHarianByJenisLimbahData = {
+            labels: {!! json_encode($laporan_harian_by_jenis_limbah_labels ?? []) !!},
+            data: {!! json_encode($laporan_harian_by_jenis_limbah_data ?? []) !!}
+        };
+    </script>
+    <script src="{{ asset('js/chart-laporan-harian.js') }}"></script>
+@endpush
 
         <!-- Alerts and Notifications -->
         @if(count($alerts) > 0)

@@ -60,60 +60,74 @@
             <li class="relative" x-data="{ open: false }">
                 <div x-data="{ isNotificationMenuOpen: false }">
                     <button class="relative align-middle rounded-md focus:outline-none focus:shadow-outline-green"
-                        @click="isNotificationMenuOpen = !isNotificationMenuOpen"
-                        @keydown.escape="isNotificationMenuOpen = false" aria-label="Notifications"
-                        aria-haspopup="true">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                                d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z">
-                            </path>
-                        </svg>
-                        @if(auth()->user()->unread_notification_count > 0)
-                            <span
-                                class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                {{ auth()->user()->unread_notification_count > 9 ? '9+' : auth()->user()->unread_notification_count }}
-                            </span>
-                        @endif
-                    </button>
+                    @click="isNotificationMenuOpen = !isNotificationMenuOpen; if(isNotificationMenuOpen) { $dispatch('alpine:notification-dropdown-open') }"
+                    @keydown.escape="isNotificationMenuOpen = false"
+                    aria-label="Notifications"
+                    aria-haspopup="true">
+                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z">
+                        </path>
+                    </svg>
+                    <!-- Notification badge -->
+                    <span id="notification-badge"
+                        class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full notification-badge hidden">
+                        0
+                    </span>
+                </button>
 
-
-                    <div x-show="isNotificationMenuOpen" x-transition:enter="transition ease-out duration-100"
-                        x-transition:enter-start="transform opacity-0 scale-95"
-                        x-transition:enter-end="transform opacity-100 scale-100"
-                        x-transition:leave="transition ease-in duration-75"
-                        x-transition:leave-start="transform opacity-100 scale-100"
-                        x-transition:leave-end="transform opacity-0 scale-95"
-                        @click.away="isNotificationMenuOpen = false" @keydown.escape="isNotificationMenuOpen = false"
-                        class="absolute right-0 z-50 w-80 mt-2 bg-white border border-gray-100 rounded-md shadow-lg dark:border-gray-700 dark:bg-gray-700"
-                        style="display: none;" x-cloak>
-
-                        <!-- Header -->
-                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-600">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Notifikasi</h3>
-                                @if(auth()->user()->unread_notification_count > 0)
-                                    <button onclick="markAllAsRead()"
-                                        class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400">
-                                        Tandai Semua Dibaca
-                                    </button>
-                                @endif
+                <template x-if="isNotificationMenuOpen">
+                    <ul x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        @click.away="isNotificationMenuOpen = false"
+                        @keydown.escape="isNotificationMenuOpen = false"
+                        class="absolute right-0 w-80 p-2 mt-2 space-y-2 text-gray-600 bg-white border border-gray-100 rounded-md shadow-md dark:border-gray-700 dark:text-gray-300 dark:bg-gray-700"
+                        aria-label="submenu">
+                        
+                        <!-- Notification Header -->
+                        <li class="flex items-center justify-between px-2 py-1 border-b border-gray-100 dark:border-gray-600">
+                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Notifikasi</span>
+                            <div class="flex space-x-2">
+                                <button onclick="markAllAsRead()" 
+                                        class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                        title="Tandai semua sebagai dibaca">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </button>
+                                <a href="{{ route('notifications.index') }}" 
+                                   class="text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                                   title="Lihat semua notifikasi">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
                             </div>
-                        </div>
-
-                        <!-- Notifications list -->
-                        <div id="notification-dropdown" class="max-h-96 overflow-y-auto">
-                            <!-- Content will be populated by JavaScript -->
-                        </div>
+                        </li>
+                        <!-- Notification Content -->
+                        <li>
+                            <div id="notification-dropdown" class="max-h-96 overflow-y-auto">
+                                <!-- Notifications will be loaded here by JavaScript -->
+                                <div class="px-4 py-8 text-center">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Memuat notifikasi...</p>
+                                </div>
+                            </div>
+                        </li>
 
                         <!-- Footer -->
-                        <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-600">
+                        <li class="border-t border-gray-100 dark:border-gray-600 pt-2">
                             <a href="{{ route('notifications.index') }}"
-                                class="block text-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
-                                Lihat Semua Notifikasi
+                                class="flex items-center justify-center w-full px-2 py-2 text-sm font-medium text-purple-600 transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-gray-600 dark:hover:text-purple-300">
+                                <span>Lihat Semua Notifikasi</span>
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
                             </a>
-                        </div>
-                    </div>
-                </div>
+                        </li>
+                    </ul>
+                </template>
             </li>
 
             <div class="py-2 text-lg font-bold text-gray-700 dark:text-gray-300 border-b border-gray-600 dark:border-gray-600">
@@ -262,36 +276,12 @@
 </style>
 
 <script>
-    // Optional: Real-time notification updates
-    document.addEventListener('DOMContentLoaded', function () {
-        // Function to simulate real-time notifications
-        function simulateRealTimeNotifications() {
-            // This would be replaced with actual WebSocket or polling logic
-            setInterval(() => {
-                // Simulate new notification every 30 seconds (for demo)
-                const event = new CustomEvent('newNotification', {
-                    detail: {
-                        id: Date.now(),
-                        type: 'info',
-                        title: 'Notifikasi Baru',
-                        message: 'Ada aktivitas baru di sistem',
-                        time: 'Baru saja',
-                        read: false,
-                        url: '#'
-                    }
-                });
-                window.dispatchEvent(event);
-            }, 30000);
+    // Initialize notifications when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load notifications.js functions
+        if (typeof fetchAndUpdateNotifications === 'function') {
+            fetchAndUpdateNotifications();
         }
-
-        // Listen for new notifications
-        window.addEventListener('newNotification', function (e) {
-            // This would update the Alpine.js data
-            console.log('New notification received:', e.detail);
-        });
-
-        // Start simulation (remove in production)
-        // simulateRealTimeNotifications();
     });
 
     document.addEventListener('DOMContentLoaded', function () {

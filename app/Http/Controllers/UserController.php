@@ -100,6 +100,12 @@ class UserController extends Controller
                 ->with('error', 'Tidak dapat menghapus akun sendiri.');
         }
 
+        // Only allow deletion if user is non-active
+        if ($user->status !== 'inactive') {
+            return redirect()->route('users.index')
+                ->with('error', 'User hanya dapat dihapus jika statusnya non-aktif.');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')

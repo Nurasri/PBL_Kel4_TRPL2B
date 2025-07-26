@@ -97,7 +97,7 @@ class Vendor extends Model
     public static function validationRules($id = null)
     {
         return [
-            'nama_perusahaan' => 'required|string|max:255',
+            'nama_perusahaan' => 'required|string|max:255|unique:vendors,nama_perusahaan,' . $id,
             'nama_pic' => 'required|string|max:255',
             'email' => 'required|email|unique:vendors,email,' . $id,
             'telepon' => 'required|string|max:20',

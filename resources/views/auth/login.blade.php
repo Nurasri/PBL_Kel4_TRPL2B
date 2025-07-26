@@ -48,8 +48,6 @@
                                         <svg id="eyeIcon" class="w-5 h-5 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
                                         </svg>
-                                        
-                                        
                                     </button>
                                 </div>
                                 @error('password')
@@ -84,9 +82,6 @@
                                 class="w-full "
                             >
                                 <span class="flex items-center justify-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 0a4 4 0 01-4 4H3a4 4 0 014-4z"></path>
-                                    </svg>
                                     Masuk
                                 </span>
                             </x-button>
